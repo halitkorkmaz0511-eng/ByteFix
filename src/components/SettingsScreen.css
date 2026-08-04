@@ -1,0 +1,240 @@
+.settings-screen {
+  min-height: calc(100vh - 120px);
+  padding: 1.5rem;
+}
+
+.settings-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.settings-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  letter-spacing: 2px;
+}
+
+.settings-list {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  transition: background 0.3s ease;
+}
+
+.setting-item:last-child {
+  border-bottom: none;
+}
+
+.setting-item:hover {
+  background: rgba(51, 65, 85, 0.3);
+}
+
+.setting-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.setting-icon {
+  font-size: 1.5rem;
+}
+
+.setting-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.setting-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.setting-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.toggle-btn {
+  width: 60px;
+  height: 32px;
+  background: #475569;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.3s ease;
+}
+
+.toggle-btn.on {
+  background: var(--success);
+}
+
+.toggle-slider {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  background: white;
+  border-radius: 50%;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-btn.on .toggle-slider {
+  transform: translateX(28px);
+}
+
+.danger-zone {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(15, 23, 42, 1));
+  border: 1px solid var(--error);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.danger-zone h3 {
+  color: var(--error);
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.reset-btn {
+  width: 100%;
+  padding: 0.875rem;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid var(--error);
+  border-radius: 12px;
+  color: var(--error);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reset-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.reset-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.reset-modal-content {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border: 2px solid var(--error);
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  animation: modalBounce 0.3s ease-out;
+}
+
+@keyframes modalBounce {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.reset-modal-content h3 {
+  color: var(--error);
+  margin: 0 0 1rem;
+}
+
+.reset-modal-content p {
+  color: var(--text-secondary);
+  margin: 0 0 0.5rem;
+}
+
+.reset-modal-content .warning {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.reset-modal-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.cancel-btn,
+.confirm-reset-btn {
+  flex: 1;
+  padding: 0.875rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn {
+  background: rgba(51, 65, 85, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: var(--text-primary);
+}
+
+.cancel-btn:hover {
+  background: rgba(71, 85, 105, 0.8);
+}
+
+.confirm-reset-btn {
+  background: var(--error);
+  border: none;
+  color: white;
+}
+
+.confirm-reset-btn:hover {
+  background: #dc2626;
+}
+
+@media (max-width: 480px) {
+  .settings-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .settings-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .setting-item {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .toggle-btn {
+    align-self: flex-end;
+  }
+}

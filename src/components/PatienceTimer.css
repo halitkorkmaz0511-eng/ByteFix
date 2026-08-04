@@ -1,0 +1,75 @@
+.patience-timer {
+  padding: 1rem;
+  background: rgba(30, 41, 59, 0.8);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+}
+
+.patience-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.patience-bar-container {
+  height: 12px;
+  background: rgba(51, 65, 85, 0.8);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.patience-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.1s linear, background 0.3s ease;
+}
+
+.patience-bar-fill.high {
+  background: linear-gradient(90deg, var(--success), #22c55e);
+}
+
+.patience-bar-fill.medium {
+  background: linear-gradient(90deg, var(--warning), #eab308);
+  animation: mediumPulse 1s ease-in-out infinite;
+}
+
+@keyframes mediumPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.patience-bar-fill.low {
+  background: linear-gradient(90deg, var(--error), #ef4444);
+  animation: lowPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes lowPulse {
+  0%, 100% { opacity: 1; transform: scaleY(1); }
+  50% { opacity: 0.7; transform: scaleY(0.9); }
+}
+
+.patience-hearts {
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.heart {
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.heart.full {
+  filter: none;
+  transform: scale(1);
+}
+
+.heart.empty {
+  filter: grayscale(1);
+  opacity: 0.4;
+  transform: scale(0.8);
+}

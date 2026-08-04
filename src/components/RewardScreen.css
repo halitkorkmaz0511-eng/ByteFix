@@ -1,0 +1,221 @@
+.reward-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.reward-card {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border: 2px solid var(--success);
+  border-radius: 24px;
+  padding: 2.5rem;
+  max-width: 450px;
+  width: 90%;
+  text-align: center;
+  animation: cardBounce 0.6s ease-out;
+  box-shadow: 0 20px 60px rgba(34, 197, 94, 0.3);
+}
+
+@keyframes cardBounce {
+  0% { transform: scale(0) rotate(-10deg); }
+  50% { transform: scale(1.1) rotate(3deg); }
+  70% { transform: scale(0.95) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+.success-icon {
+  font-size: 4rem;
+  margin-bottom: 0.5rem;
+  animation: iconSpin 0.8s ease-out;
+}
+
+@keyframes iconSpin {
+  0% { transform: rotate(-180deg) scale(0); }
+  100% { transform: rotate(0) scale(1); }
+}
+
+.reward-card h2 {
+  font-size: 2rem;
+  color: var(--success);
+  margin: 0 0 1.5rem;
+  letter-spacing: 2px;
+}
+
+.rewards-list {
+  background: rgba(30, 41, 59, 0.6);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.reward-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.reward-label {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.reward-value {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.reward-item.bonus .reward-value {
+  color: var(--success);
+}
+
+.reward-item.combo {
+  color: var(--accent-orange);
+}
+
+.reward-item.combo .reward-value {
+  color: var(--accent-orange);
+}
+
+.reward-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.3), transparent);
+  margin: 1rem 0;
+}
+
+.reward-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 2px;
+}
+
+.total-value {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--success);
+  animation: moneyPulse 1s ease-in-out infinite;
+}
+
+@keyframes moneyPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.xp-rep-gains {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.gain-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(59, 130, 246, 0.2);
+  border-radius: 20px;
+  animation: gainBounce 0.5s ease-out;
+}
+
+@keyframes gainBounce {
+  0% { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.gain-icon {
+  font-size: 1.2rem;
+}
+
+.gain-value {
+  font-weight: 700;
+  color: var(--accent-blue);
+}
+
+.level-up {
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.3), rgba(234, 88, 12, 0.1));
+  border: 2px solid var(--accent-orange);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  animation: levelUpGlow 1s ease-in-out infinite;
+}
+
+@keyframes levelUpGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(234, 88, 12, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(234, 88, 12, 0.5); }
+}
+
+.level-up h3 {
+  font-size: 1.3rem;
+  color: var(--accent-orange);
+  margin: 0 0 0.5rem;
+}
+
+.new-level {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+.continue-btn {
+  padding: 1rem 3rem;
+  background: linear-gradient(135deg, var(--success), #16a34a);
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 25px rgba(34, 197, 94, 0.4);
+}
+
+.continue-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 35px rgba(34, 197, 94, 0.5);
+}
+
+.continue-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+  .reward-card {
+    padding: 1.75rem;
+  }
+
+  .success-icon {
+    font-size: 3rem;
+  }
+
+  .reward-card h2 {
+    font-size: 1.5rem;
+  }
+
+  .total-value {
+    font-size: 1.5rem;
+  }
+
+  .xp-rep-gains {
+    gap: 1rem;
+  }
+}

@@ -1,0 +1,119 @@
+.hud {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+  border-bottom: 2px solid var(--accent-blue);
+  flex-wrap: wrap;
+}
+
+.hud-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(51, 65, 85, 0.6);
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  animation: hudItemEnter 0.5s ease-out;
+}
+
+@keyframes hudItemEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hud-icon {
+  font-size: 1.2rem;
+}
+
+.hud-value {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.money .hud-value {
+  color: var(--success);
+}
+
+.reputation .hud-value {
+  color: var(--warning);
+}
+
+.level {
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.xp-bar {
+  width: 60px;
+  height: 4px;
+  background: rgba(51, 65, 85, 0.8);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-blue), var(--success));
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.combo {
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.3), rgba(234, 88, 12, 0.1));
+  border-color: var(--accent-orange);
+  animation: comboPulse 1s ease-in-out infinite;
+}
+
+@keyframes comboPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.combo-fire {
+  font-size: 1.2rem;
+  animation: fireFlicker 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes fireFlicker {
+  from {
+    transform: scale(1) rotate(-5deg);
+  }
+  to {
+    transform: scale(1.1) rotate(5deg);
+  }
+}
+
+.combo-value {
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: var(--accent-orange);
+}
+
+@media (max-width: 480px) {
+  .hud {
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .hud-item {
+    padding: 0.4rem 0.75rem;
+  }
+
+  .hud-value {
+    font-size: 0.9rem;
+  }
+}

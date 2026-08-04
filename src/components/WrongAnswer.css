@@ -1,0 +1,116 @@
+.wrong-answer {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.wrong-card {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border: 2px solid var(--error);
+  border-radius: 24px;
+  padding: 2.5rem;
+  max-width: 450px;
+  width: 90%;
+  text-align: center;
+  animation: cardBounce 0.5s ease-out;
+  box-shadow: 0 20px 60px rgba(239, 68, 68, 0.3);
+}
+
+@keyframes cardBounce {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.wrong-icon {
+  font-size: 4rem;
+  margin-bottom: 0.5rem;
+  animation: iconShake 0.5s ease-out;
+}
+
+@keyframes iconShake {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-10deg); }
+  75% { transform: rotate(10deg); }
+}
+
+.wrong-card h2 {
+  font-size: 1.8rem;
+  color: var(--error);
+  margin: 0 0 1rem;
+  letter-spacing: 2px;
+}
+
+.feedback {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.patience-effect {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(239, 68, 68, 0.2);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+}
+
+.patience-drain {
+  font-weight: 700;
+  color: var(--error);
+  font-size: 1.2rem;
+}
+
+.hint {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0 0 1.5rem;
+}
+
+.continue-btn {
+  padding: 1rem 3rem;
+  background: linear-gradient(135deg, var(--warning), #ca8a04);
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 25px rgba(234, 179, 8, 0.4);
+}
+
+.continue-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 35px rgba(234, 179, 8, 0.5);
+}
+
+@media (max-width: 480px) {
+  .wrong-card {
+    padding: 1.75rem;
+  }
+
+  .wrong-icon {
+    font-size: 3rem;
+  }
+
+  .wrong-card h2 {
+    font-size: 1.4rem;
+  }
+}
