@@ -31,17 +31,20 @@ export function useGameState() {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
+        console.log('Loaded save:', parsed);
         return { ...defaultState, ...parsed };
       }
     } catch (e) {
       console.error('Failed to load save:', e);
     }
+    console.log('Using default state');
     return defaultState;
   });
 
   // Save to localStorage whenever state changes
   useEffect(() => {
     try {
+      console.log('Saving game state:', gameState);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
     } catch (e) {
       console.error('Failed to save:', e);

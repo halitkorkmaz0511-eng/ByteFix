@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { soundSystem } from '../utils/soundSystem';
 import './CustomerArrival.css';
 
-export function CustomerArrival({ customer, onInspect }) {
+export function CustomerArrival({ customer, onInspect, isFromQueue }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
@@ -16,6 +16,8 @@ export function CustomerArrival({ customer, onInspect }) {
     setIsExiting(true);
     setTimeout(() => onInspect(), 300);
   };
+
+  if (!customer) return null;
 
   return (
     <div className={`customer-arrival ${isVisible ? 'visible' : ''} ${isExiting ? 'exiting' : ''}`}>

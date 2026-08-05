@@ -34,7 +34,11 @@ export function DiagnosticScreen({ customer, onBack, onRepair }) {
   };
 
   const handleRepairSelect = (repairId) => {
-    soundSystem.playClick();
+    try {
+      soundSystem.playClick();
+    } catch (e) {
+      console.error('Sound error:', e);
+    }
     onRepair(selectedProblem, repairId);
   };
 

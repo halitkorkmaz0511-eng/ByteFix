@@ -3,6 +3,7 @@ import { soundSystem } from '../utils/soundSystem';
 import './MiniGame.css';
 
 export function CleanCoolingGame({ onComplete, speedMultiplier = 1 }) {
+  console.log('CleanCoolingGame rendering, speedMultiplier:', speedMultiplier);
   const [dustParticles, setDustParticles] = useState([]);
   const [timeLeft, setTimeLeft] = useState(15);
   const [particlesLeft, setParticlesLeft] = useState(0);
@@ -13,6 +14,7 @@ export function CleanCoolingGame({ onComplete, speedMultiplier = 1 }) {
 
   const totalParticles = 10;
   const adjustedTime = Math.floor(15 * speedMultiplier);
+  console.log('adjustedTime:', adjustedTime);
 
   // Initialize dust particles
   useEffect(() => {

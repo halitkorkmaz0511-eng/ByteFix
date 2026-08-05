@@ -1,12 +1,9 @@
-import { getTotalXpForLevel } from '../data/upgrades';
+import { getTotalXpForLevel, getXpForLevel } from '../data/upgrades';
 import './HUD.css';
 
 export function HUD({ gameState }) {
-  const currentLevelXp = getTotalXpForLevel(gameState.shopLevel);
-  const previousLevelXp = getTotalXpForLevel(gameState.shopLevel - 1);
-  const xpProgress = currentLevelXp > previousLevelXp 
-    ? ((gameState.xp - previousLevelXp) / (currentLevelXp - previousLevelXp)) * 100 
-    : 0;
+  const xpForCurrentLevel = getXpForLevel(gameState.shopLevel);
+  const xpProgress = Math.min(100, (gameState.xp / xpForCurrentLevel) * 100);
 
   return (
     <div className="hud">
@@ -17,7 +14,7 @@ export function HUD({ gameState }) {
       
       <div className="hud-item reputation">
         <span className="hud-icon">⭐</span>
-        <span className="hud-value">{gameState.reputation}</span>
+        <span className="hud-value">{gameState.reputation}%</span>
       </div>
       
       <div className="hud-item level">

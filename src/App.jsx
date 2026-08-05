@@ -1,13 +1,15 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useGameState } from './hooks/useGameState';
 import { generateCustomer } from './data/customerData';
 import { problems } from './data/problems';
 import { soundSystem } from './utils/soundSystem';
+import { getQueueCapacity } from './components/Workshop';
 
 // Components
 import { HUD } from './components/HUD';
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { Workshop } from './components/Workshop';
+import { WorkshopManagement } from './components/WorkshopManagement';
 import { CustomerArrival } from './components/CustomerArrival';
 import { DiagnosticScreen } from './components/DiagnosticScreen';
 import { CleanCoolingGame } from './components/CleanCoolingGame';
@@ -24,6 +26,7 @@ import { SettingsScreen } from './components/SettingsScreen';
 import './App.css';
 
 function App() {
+  console.log('App rendering');
   const {
     gameState,
     effects,
@@ -43,10 +46,13 @@ function App() {
   // Screen state
   const [currentScreen, setCurrentScreen] = useState('workshop');
   
-  // Customer state
-  const [customer, setCustomer] = useState(null);
+  // Customer queue system
+  const [customerQueue, setCustomerQueue] = useState([]); // Waiting customers
+  const [activeCustomer, setActiveCustomer] = useState(null); // Customer at counter
   const [currentProblem, setCurrentProblem] = useState(null);
   const [fixedProblems, setFixedProblems] = useState([]);
+  const [newCustomerArriving, setNewCustomerArriving] = useState(null); // Customer entering animation
+  const [exitingCustomer, setExitingCustomer] = useState(null); // Customer exiting animation
   
   // UI state
   const [showWrongAnswer, setShowWrongAnswer] = useState(false);
@@ -59,25 +65,233 @@ function App() {
   // Reward state
   const [reward, setReward] = useState(null);
 
+  // Refs for timers
+  const spawnTimerRef = useRef(null);
+  const patienceTimerRef = useRef(null);
+  const isProcessingTimeoutRef = useRef(false);
+
   // Initialize sound
   useEffect(() => {
     soundSystem.setEnabled(gameState.settings.sound);
   }, [gameState.settings.sound]);
 
-  // Generate a new customer
-  const handleNewCustomer = useCallback(() => {
-    // Determine difficulty based on shop level
+  // Calculate spawn interval based on shop level and reputation
+  const getSpawnInterval = useCallback(() => {
+    const baseInterval = 8000; // 8 seconds base
+    const levelReduction = Math.min(gameState.shopLevel * 500, 4000); // Max 4s reduction
+    const reputationReduction = Math.min(gameState.reputation * 20, 2000); // Max 2s reduction
+    const minInterval = 3000; // Minimum 3 seconds between spawns
+    return Math.max(minInterval, baseInterval - levelReduction - reputationReduction);
+  }, [gameState.shopLevel, gameState.reputation]);
+
+  // Move customer from queue to counter
+  const moveToCounter = useCallback((customer) => {
+    setActiveCustomer(customer);
+    setCustomerPatience(customer.patience);
+    setCurrentScreen('customer');
+    soundSystem.playCustomerArrival();
+  }, []);
+
+  // Spawn a new customer - uses functional state updates to avoid closure issues
+  const spawnCustomer = useCallback(() => {
+    // Don't spawn while in menus or if no welcome seen
+    if (!gameState.hasSeenWelcome) return false;
+    // Workshop view is where management panel is, customers should continue spawning
+    if (currentScreen === 'shop' || currentScreen === 'stats' || currentScreen === 'settings' || currentScreen === 'welcome') return false;
+    if (currentScreen === 'minigame' || currentScreen === 'reward' || currentScreen === 'failed') return false;
+
+    // Calculate max queue size based on shop level
+    const maxQueueSize = getQueueCapacity(gameState.shopLevel);
+    if (customerQueue.length >= maxQueueSize) return false;
+
     const difficulty = Math.min(gameState.shopLevel, effects.maxDifficulty);
     const newCustomer = generateCustomer(difficulty);
-    setCustomer(newCustomer);
-    setCustomerPatience(newCustomer.patience);
-    setFixedProblems([]);
-    setCurrentProblem(null);
-    setCurrentScreen('customer');
-  }, [gameState.shopLevel, effects.maxDifficulty]);
+    
+    soundSystem.playCustomerArrival();
+    setNewCustomerArriving(newCustomer);
+    
+    // After entrance animation, add to queue/counter
+    setTimeout(() => {
+      setNewCustomerArriving(null);
+      
+      // Use functional updates to get current state
+      setActiveCustomer(current => {
+        if (current) {
+          // Counter is occupied, add to queue
+          setCustomerQueue(prev => [...prev, newCustomer]);
+          return current;
+        }
+        // Counter is empty, check queue
+        setCustomerQueue(prev => {
+          if (prev.length === 0) {
+            // Both counter and queue are empty, move to counter
+            setTimeout(() => moveToCounter(newCustomer), 0);
+            return prev;
+          }
+          // Queue has customers, add to end of queue
+          return [...prev, newCustomer];
+        });
+        return current;
+      });
+    }, 1500);
+    
+    return true;
+  }, [currentScreen, customerQueue.length, gameState.shopLevel, effects.maxDifficulty, gameState.hasSeenWelcome, moveToCounter]);
+
+  // Start automatic customer spawning
+  useEffect(() => {
+    if (!gameState.hasSeenWelcome) return;
+    // Workshop view is where management panel is, customers should continue spawning
+    if (currentScreen === 'shop' || currentScreen === 'stats' || currentScreen === 'settings' || currentScreen === 'welcome') return;
+    if (currentScreen === 'minigame' || currentScreen === 'reward' || currentScreen === 'failed') return;
+
+    // Clear any existing spawn timer
+    if (spawnTimerRef.current) {
+      clearTimeout(spawnTimerRef.current);
+    }
+
+    // Spawn first customer after a short delay if counter is empty
+    if (!activeCustomer && customerQueue.length === 0) {
+      spawnTimerRef.current = setTimeout(() => {
+        spawnCustomer();
+      }, 2000);
+    }
+
+    // Calculate max queue size based on shop level
+    const maxQueueSize = getQueueCapacity(gameState.shopLevel);
+
+    // Set up automatic spawning for additional customers
+    const scheduleNextSpawn = () => {
+      spawnTimerRef.current = setTimeout(() => {
+        spawnCustomer();
+        scheduleNextSpawn();
+      }, getSpawnInterval());
+    };
+
+    // Only schedule if queue isn't full
+    if (customerQueue.length < maxQueueSize) {
+      scheduleNextSpawn();
+    }
+
+    return () => {
+      if (spawnTimerRef.current) {
+        clearTimeout(spawnTimerRef.current);
+      }
+    };
+  }, [gameState.hasSeenWelcome, currentScreen, spawnCustomer, getSpawnInterval, gameState.shopLevel]);
+
+  // Patience countdown for active customer
+  useEffect(() => {
+    // Only run patience timer on active gameplay screens
+    const isActiveScreen = ['customer', 'diagnostic'].includes(currentScreen);
+    
+    if (!isActiveScreen || !activeCustomer) {
+      // Clear patience timer when not on active screens
+      if (patienceTimerRef.current) {
+        clearInterval(patienceTimerRef.current);
+        patienceTimerRef.current = null;
+      }
+      return;
+    }
+
+    // Clear any existing timer
+    if (patienceTimerRef.current) {
+      clearInterval(patienceTimerRef.current);
+    }
+
+    // Start patience countdown
+    patienceTimerRef.current = setInterval(() => {
+      if (isProcessingTimeoutRef.current) return;
+      
+      setCustomerPatience(prev => {
+        const newPatience = Math.max(0, prev - 1);
+        if (newPatience <= 0 && !isProcessingTimeoutRef.current) {
+          // Customer ran out of patience
+          isProcessingTimeoutRef.current = true;
+          if (patienceTimerRef.current) {
+            clearInterval(patienceTimerRef.current);
+            patienceTimerRef.current = null;
+          }
+          recordFailure();
+          resetCombo();
+          setCurrentScreen('failed');
+          soundSystem.playError();
+        }
+        return newPatience;
+      });
+    }, 200);
+
+    return () => {
+      if (patienceTimerRef.current) {
+        clearInterval(patienceTimerRef.current);
+        patienceTimerRef.current = null;
+      }
+    };
+  }, [currentScreen, activeCustomer, recordFailure, resetCombo]);
+
+  // Patience countdown for waiting customers in queue
+  useEffect(() => {
+    if (customerQueue.length === 0) return;
+
+    const queueTimer = setInterval(() => {
+      setCustomerQueue(prev => {
+        let customersWhoLeft = 0;
+        const updated = prev.map(c => ({
+          ...c,
+          patience: Math.max(0, c.patience - 0.5)
+        })).filter(c => {
+          if (c.patience <= 0) {
+            soundSystem.playError();
+            recordFailure();
+            resetCombo();
+            customersWhoLeft++;
+            return false;
+          }
+          return true;
+        });
+        
+        // If a customer left, check if we should bring next one
+        if (customersWhoLeft > 0 && !activeCustomer) {
+          setTimeout(() => {
+            if (updated.length > 0) {
+              moveToCounter(updated[0]);
+            }
+          }, 100);
+        }
+        
+        return updated;
+      });
+    }, 200);
+
+    return () => clearInterval(queueTimer);
+  }, [customerQueue.length, activeCustomer, moveToCounter, recordFailure, resetCombo]);
+
+  // Handle customer timeout (legacy function, now handled in useEffect)
+  const handleCustomerTimeout = useCallback(() => {
+    // This is now handled in the useEffect to avoid race conditions
+  }, []);
+
+  // Bring next customer from queue to counter
+  const bringNextCustomer = useCallback(() => {
+    isProcessingTimeoutRef.current = false;
+    setCustomerQueue(prev => {
+      if (prev.length === 0) {
+        setActiveCustomer(null);
+        return prev;
+      }
+      
+      const [nextCustomer, ...remaining] = prev;
+      setActiveCustomer(nextCustomer);
+      setCustomerPatience(nextCustomer.patience);
+      setCurrentScreen('customer');
+      soundSystem.playCustomerArrival();
+      return remaining;
+    });
+  }, []);
 
   // Start inspecting PC
   const handleInspect = useCallback(() => {
+    soundSystem.playClick();
     setCurrentScreen('diagnostic');
   }, []);
 
@@ -88,11 +302,18 @@ function App() {
 
   // Handle repair selection
   const handleRepair = useCallback((problemId, repairId) => {
+    console.log('handleRepair called:', problemId, repairId);
+    
+    if (!problems[problemId]) {
+      console.error('Problem not found:', problemId);
+      return;
+    }
+    
     const problem = problems[problemId];
     
     if (repairId === problem.correctRepair) {
       // Correct repair!
-      soundSystem.playSuccess();
+      console.log('Correct repair, setting mini-game');
       setCurrentProblem(problemId);
       setIsPaused(true);
       setCurrentScreen('minigame');
@@ -127,9 +348,10 @@ function App() {
       setFixedProblems(newFixedProblems);
       
       // Check if all problems are fixed
-      if (newFixedProblems.length === customer.problems.length) {
+      if (activeCustomer && newFixedProblems.length === activeCustomer.problems.length) {
         // All problems fixed! Calculate rewards
         calculateRewards(newFixedProblems.length);
+        setCurrentScreen('reward');
       } else {
         // More problems to fix
         setCurrentScreen('diagnostic');
@@ -149,16 +371,16 @@ function App() {
     
     setCurrentProblem(null);
     setIsMiniGame(false);
-  }, [fixedProblems, currentProblem, customer, customerPatience, recordFailure, resetCombo]);
+  }, [fixedProblems, currentProblem, activeCustomer, customerPatience, recordFailure, resetCombo]);
 
   // Calculate and show rewards
   const calculateRewards = useCallback((problemCount) => {
     recordSuccess();
     incrementCombo();
     
-    const basePayment = customer.basePayment;
+    const basePayment = activeCustomer.basePayment;
     const speedBonus = customerPatience > 70 ? Math.floor(basePayment * 0.3) : 0;
-    const perfectBonus = customerPatience === customer.maxPatience ? Math.floor(basePayment * 0.2) : 0;
+    const perfectBonus = customerPatience === activeCustomer.maxPatience ? Math.floor(basePayment * 0.2) : 0;
     
     // Apply combo multiplier
     const comboMultiplier = gameState.combo + 1 > 3 ? 1.5 : 
@@ -186,27 +408,66 @@ function App() {
     });
     
     setCurrentScreen('reward');
-  }, [customer, customerPatience, gameState.combo, effects, recordSuccess, incrementCombo, addMoney, addXp, updateReputation]);
-
-  // Handle customer timeout
-  const handlePatienceTimeout = useCallback(() => {
-    recordFailure();
-    resetCombo();
-    setCurrentScreen('failed');
-  }, [recordFailure, resetCombo]);
+  }, [activeCustomer, customerPatience, gameState.combo, effects, recordSuccess, incrementCombo, addMoney, addXp, updateReputation]);
 
   // Continue from reward screen
   const handleContinueFromReward = useCallback(() => {
+    const completedCustomer = activeCustomer;
     setReward(null);
-    setCustomer(null);
-    setCurrentScreen('workshop');
-  }, []);
+    setFixedProblems([]);
+    
+    // Show exit animation
+    if (completedCustomer) {
+      setExitingCustomer(completedCustomer);
+      setTimeout(() => {
+        setExitingCustomer(null);
+        setActiveCustomer(null);
+        
+        // Check if there's a customer waiting
+        if (customerQueue.length > 0) {
+          bringNextCustomer();
+        } else {
+          setCurrentScreen('workshop');
+        }
+      }, 1500);
+    } else {
+      setActiveCustomer(null);
+      if (customerQueue.length > 0) {
+        bringNextCustomer();
+      } else {
+        setCurrentScreen('workshop');
+      }
+    }
+  }, [activeCustomer, customerQueue.length, bringNextCustomer]);
 
   // Continue from failed screen
   const handleContinueFromFailed = useCallback(() => {
-    setCustomer(null);
-    setCurrentScreen('workshop');
-  }, []);
+    const failedCustomer = activeCustomer;
+    setFixedProblems([]);
+    
+    // Show exit animation
+    if (failedCustomer) {
+      setExitingCustomer(failedCustomer);
+      setTimeout(() => {
+        setExitingCustomer(null);
+        setActiveCustomer(null);
+        
+        // Check if there's a customer waiting
+        if (customerQueue.length > 0) {
+          bringNextCustomer();
+        } else {
+          setCurrentScreen('workshop');
+        }
+      }, 1500);
+    } else {
+      setActiveCustomer(null);
+      if (customerQueue.length > 0) {
+        bringNextCustomer();
+      } else {
+        setCurrentScreen('workshop');
+      }
+    }
+  }, [activeCustomer, customerQueue.length, bringNextCustomer]);
 
   // Open screens
   const handleOpenShop = useCallback(() => {
@@ -225,130 +486,172 @@ function App() {
     setCurrentScreen('workshop');
   }, []);
 
+  // Check if there are customers waiting
+  const hasWaitingCustomers = customerQueue.length > 0;
+  const totalCustomers = customerQueue.length + (activeCustomer ? 1 : 0);
+
+  // Determine which screen to show
+  const showWorkshop = !['welcome', 'customer', 'diagnostic', 'minigame', 'reward', 'failed', 'shop', 'stats', 'settings'].includes(currentScreen);
+
   // Render current screen
   const renderScreen = () => {
-    switch (currentScreen) {
-      case 'welcome':
-        return <WelcomeScreen onStart={markWelcomeSeen} />;
+    try {
+      console.log('renderScreen called:', currentScreen, 'currentProblem:', currentProblem);
       
-      case 'workshop':
-        return (
-          <Workshop 
-            onNewCustomer={handleNewCustomer}
-            onOpenShop={handleOpenShop}
-            onOpenStats={handleOpenStats}
-            onOpenSettings={handleOpenSettings}
-            hasActiveCustomer={!!customer}
-          />
-        );
-      
-      case 'customer':
-        return <CustomerArrival customer={customer} onInspect={handleInspect} />;
-      
-      case 'diagnostic':
-        return (
-          <>
-            <PatienceTimer
-              maxPatience={customer.maxPatience}
-              currentPatience={customerPatience}
-              onPatienceChange={setCustomerPatience}
-              onTimeout={handlePatienceTimeout}
-              isPaused={isPaused}
-            />
-            <DiagnosticScreen 
-              customer={customer}
-              onBack={handleBackFromDiagnostic}
-              onRepair={handleRepair}
-            />
-          </>
-        );
-      
-      case 'minigame':
-        if (currentProblem === 'cpu_overheating') {
+      switch (currentScreen) {
+        case 'welcome':
+          return <WelcomeScreen onStart={markWelcomeSeen} />;
+        
+        case 'customer':
           return (
-            <CleanCoolingGame 
-              onComplete={handleMiniGameComplete}
-              speedMultiplier={effects.miniGameSpeed}
+            <CustomerArrival 
+              customer={activeCustomer} 
+              onInspect={handleInspect}
+              isFromQueue={true}
             />
           );
-        } else if (currentProblem === 'storage_full') {
+        
+        case 'workshop':
           return (
-            <CleanFilesGame 
-              onComplete={handleMiniGameComplete}
-              speedMultiplier={effects.miniGameSpeed}
+            <div className="workshop-view">
+              {/* Left Panel: Active Shop */}
+              <div className="active-shop-panel">
+                <Workshop 
+                  activeCustomer={activeCustomer}
+                  customerQueue={customerQueue}
+                  newCustomerArriving={newCustomerArriving}
+                  exitingCustomer={exitingCustomer}
+                  totalCustomers={gameState.totalCustomers}
+                  onCustomerReady={() => setCurrentScreen('customer')}
+                  onInspect={handleInspect}
+                  shopLevel={gameState.shopLevel}
+                />
+              </div>
+              
+              {/* Right Panel: Shop Management */}
+              <div className="management-panel">
+                <WorkshopManagement
+                  gameState={gameState}
+                  effects={effects}
+                  onPurchaseUpgrade={purchaseUpgrade}
+                  onOpenShop={handleOpenShop}
+                  onOpenStats={handleOpenStats}
+                  onOpenSettings={handleOpenSettings}
+                  customerQueueLength={customerQueue.length}
+                  activeCustomer={activeCustomer}
+                  queueCapacity={getQueueCapacity(gameState.shopLevel)}
+                />
+              </div>
+            </div>
+          );
+        
+        case 'diagnostic':
+          return (
+            <>
+              <PatienceTimer
+                maxPatience={activeCustomer.maxPatience}
+                currentPatience={customerPatience}
+                onPatienceChange={setCustomerPatience}
+                onTimeout={handleCustomerTimeout}
+                isPaused={isPaused}
+              />
+              <DiagnosticScreen 
+                customer={activeCustomer}
+                onBack={handleBackFromDiagnostic}
+                onRepair={handleRepair}
+              />
+            </>
+          );
+        
+        case 'minigame':
+          // Render the appropriate mini-game based on current problem
+          const miniGameProps = {
+            onComplete: handleMiniGameComplete,
+            speedMultiplier: effects.miniGameSpeed
+          };
+          
+          if (currentProblem === 'cpu_overheating') {
+            return <CleanCoolingGame {...miniGameProps} />;
+          } else if (currentProblem === 'storage_full') {
+            return <CleanFilesGame {...miniGameProps} />;
+          } else if (currentProblem === 'virus') {
+            return <VirusScanGame {...miniGameProps} />;
+          }
+          
+          // Fallback - should not reach here
+          return (
+            <div className="mini-game" style={{ padding: '2rem', textAlign: 'center' }}>
+              <h2>ERROR: Unknown problem</h2>
+              <p>Problem: {currentProblem}</p>
+              <button onClick={() => handleMiniGameComplete(false)}>Continue</button>
+            </div>
+          );
+        
+        case 'reward':
+          return (
+            <RewardScreen 
+              payment={reward.payment}
+              speedBonus={reward.speedBonus}
+              perfectBonus={reward.perfectBonus}
+              xp={reward.xp}
+              reputation={reward.reputation}
+              combo={reward.combo}
+              isLevelUp={false}
+              newLevel={gameState.shopLevel}
+              onContinue={handleContinueFromReward}
             />
           );
-        } else if (currentProblem === 'virus') {
+        
+        case 'failed':
           return (
-            <VirusScanGame 
-              onComplete={handleMiniGameComplete}
-              speedMultiplier={effects.miniGameSpeed}
+            <FailedScreen 
+              reason="The customer ran out of patience and left!"
+              onContinue={handleContinueFromFailed}
             />
           );
-        }
-        return null;
-      
-      case 'reward':
-        return (
-          <RewardScreen 
-            payment={reward.payment}
-            speedBonus={reward.speedBonus}
-            perfectBonus={reward.perfectBonus}
-            xp={reward.xp}
-            reputation={reward.reputation}
-            combo={reward.combo}
-            isLevelUp={false}
-            newLevel={gameState.shopLevel}
-            onContinue={handleContinueFromReward}
-          />
-        );
-      
-      case 'failed':
-        return (
-          <FailedScreen 
-            reason="The customer ran out of patience and left!"
-            onContinue={handleContinueFromFailed}
-          />
-        );
-      
-      case 'shop':
-        return (
-          <ShopScreen 
-            money={gameState.money}
-            purchasedUpgrades={gameState.purchasedUpgrades}
-            onPurchase={purchaseUpgrade}
-            onBack={handleBackFromScreen}
-          />
-        );
-      
-      case 'stats':
-        return (
-          <StatsScreen 
-            stats={{
-              totalCustomers: gameState.totalCustomers,
-              successfulRepairs: gameState.successfulRepairs,
-              failedRepairs: gameState.failedRepairs,
-              totalMoneyEarned: gameState.totalMoneyEarned,
-              bestCombo: gameState.bestCombo,
-              shopLevel: gameState.shopLevel,
-              reputation: gameState.reputation
-            }}
-            onBack={handleBackFromScreen}
-          />
-        );
-      
-      case 'settings':
-        return (
-          <SettingsScreen 
-            settings={gameState.settings}
-            onUpdateSettings={updateSettings}
-            onReset={resetGame}
-            onBack={handleBackFromScreen}
-          />
-        );
-      
-      default:
-        return null;
+        
+        case 'shop':
+          return (
+            <ShopScreen 
+              money={gameState.money}
+              purchasedUpgrades={gameState.purchasedUpgrades}
+              onPurchase={purchaseUpgrade}
+              onBack={handleBackFromScreen}
+            />
+          );
+        
+        case 'stats':
+          return (
+            <StatsScreen 
+              stats={{
+                totalCustomers: gameState.totalCustomers,
+                successfulRepairs: gameState.successfulRepairs,
+                failedRepairs: gameState.failedRepairs,
+                totalMoneyEarned: gameState.totalMoneyEarned,
+                bestCombo: gameState.bestCombo,
+                shopLevel: gameState.shopLevel,
+                reputation: gameState.reputation
+              }}
+              onBack={handleBackFromScreen}
+            />
+          );
+        
+        case 'settings':
+          return (
+            <SettingsScreen 
+              settings={gameState.settings}
+              onUpdateSettings={updateSettings}
+              onReset={resetGame}
+              onBack={handleBackFromScreen}
+            />
+          );
+        
+        default:
+          return null;
+      }
+    } catch (e) {
+      console.error('renderScreen error:', e);
+      return <div>ERROR: {e.message}</div>;
     }
   };
 
@@ -364,7 +667,7 @@ function App() {
         {renderScreen()}
       </main>
       
-      {showWrongAnswer && (
+      {showWrongAnswer && activeCustomer && (
         <WrongAnswer 
           feedback={wrongFeedback}
           patienceLost={patienceLost}

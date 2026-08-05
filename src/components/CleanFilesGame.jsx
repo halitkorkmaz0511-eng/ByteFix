@@ -16,6 +16,7 @@ const allFiles = [
 ];
 
 export function CleanFilesGame({ onComplete, speedMultiplier = 1 }) {
+  console.log('CleanFilesGame rendering, speedMultiplier:', speedMultiplier);
   const [files, setFiles] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isComplete, setIsComplete] = useState(false);
