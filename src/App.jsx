@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useGameState } from './hooks/useGameState';
+import { useIdleManagement } from './hooks/useIdleManagement';
 import { generateCustomer } from './data/customerData';
 import { problems } from './data/problems';
 import { soundSystem } from './utils/soundSystem';
@@ -22,6 +23,8 @@ import { WrongAnswer } from './components/WrongAnswer';
 import { ShopScreen } from './components/ShopScreen';
 import { StatsScreen } from './components/StatsScreen';
 import { SettingsScreen } from './components/SettingsScreen';
+import { BusinessDashboard } from './components/BusinessDashboard';
+import { OfflineEarningsPopup, AchievementPopup } from './components/Popups';
 
 import './App.css';
 
@@ -43,8 +46,31 @@ function App() {
     markWelcomeSeen
   } = useGameState();
 
+  // Idle/Management system
+  const {
+    idleState,
+    offlineEarnings,
+    showOfflinePopup,
+    pendingAchievement,
+    collectOfflineEarnings,
+    dismissOfflinePopup,
+    hireAssistant,
+    fireAssistant,
+    startMarketing,
+    checkAllAchievements,
+    dismissAchievement,
+    recordPerfectRepair,
+    recordWrongAnswer,
+    getAssistantEffects,
+    getMarketingEffect,
+    resetIdleState
+  } = useIdleManagement(gameState, addMoney, addXp, updateReputation);
+
   // Screen state
   const [currentScreen, setCurrentScreen] = useState('workshop');
+  
+  // Dashboard state
+  const [showDashboard, setShowDashboard] = useState(false);
   
   // Customer queue system
   const [customerQueue, setCustomerQueue] = useState([]); // Waiting customers
@@ -80,17 +106,33 @@ function App() {
     const baseInterval = 8000; // 8 seconds base
     const levelReduction = Math.min(gameState.shopLevel * 500, 4000); // Max 4s reduction
     const reputationReduction = Math.min(gameState.reputation * 20, 2000); // Max 2s reduction
+    
+    // Apply marketing boost
+    const marketingEffect = getMarketingEffect();
+    const marketingMultiplier = marketingEffect?.multiplier || 1;
+    
+    // Apply customer boost from assistants
+    const assistantEffects = getAssistantEffects();
+    const customerBoost = assistantEffects.customerBoost;
+    
     const minInterval = 3000; // Minimum 3 seconds between spawns
-    return Math.max(minInterval, baseInterval - levelReduction - reputationReduction);
-  }, [gameState.shopLevel, gameState.reputation]);
+    const interval = Math.max(minInterval, baseInterval - levelReduction - reputationReduction);
+    
+    // Apply boosts (lower interval = more customers)
+    return Math.floor(interval / (marketingMultiplier * customerBoost));
+  }, [gameState.shopLevel, gameState.reputation, getMarketingEffect, getAssistantEffects]);
 
   // Move customer from queue to counter
   const moveToCounter = useCallback((customer) => {
-    setActiveCustomer(customer);
-    setCustomerPatience(customer.patience);
+    // Apply assistant patience bonus
+    const assistantEffects = getAssistantEffects();
+    const adjustedPatience = Math.floor(customer.patience * assistantEffects.patienceMultiplier);
+    
+    setActiveCustomer({ ...customer, adjustedPatience });
+    setCustomerPatience(adjustedPatience);
     setCurrentScreen('customer');
     soundSystem.playCustomerArrival();
-  }, []);
+  }, [getAssistantEffects]);
 
   // Spawn a new customer - uses functional state updates to avoid closure issues
   const spawnCustomer = useCallback(() => {
@@ -178,7 +220,7 @@ function App() {
         clearTimeout(spawnTimerRef.current);
       }
     };
-  }, [gameState.hasSeenWelcome, currentScreen, spawnCustomer, getSpawnInterval, gameState.shopLevel]);
+  }, [gameState.hasSeenWelcome, currentScreen, spawnCustomer, getSpawnInterval, gameState.shopLevel, getMarketingEffect, getAssistantEffects]);
 
   // Patience countdown for active customer
   useEffect(() => {
@@ -318,13 +360,14 @@ function App() {
       setIsPaused(true);
       setCurrentScreen('minigame');
     } else {
-      // Wrong repair
+      // Wrong repair - break streak
+      recordWrongAnswer();
       setWrongFeedback(problem.feedback.wrong[repairId] || 'That\'s not the right fix!');
       setPatienceLost(15);
       setCustomerPatience(prev => Math.max(0, prev - 15));
       setShowWrongAnswer(true);
     }
-  }, []);
+  }, [recordWrongAnswer]);
 
   // Continue from wrong answer
   const handleContinueFromWrong = useCallback(() => {
@@ -382,6 +425,11 @@ function App() {
     const speedBonus = customerPatience > 70 ? Math.floor(basePayment * 0.3) : 0;
     const perfectBonus = customerPatience === activeCustomer.maxPatience ? Math.floor(basePayment * 0.2) : 0;
     
+    // Check for perfect repair (100% patience remaining)
+    if (customerPatience === activeCustomer.maxPatience) {
+      recordPerfectRepair();
+    }
+    
     // Apply combo multiplier
     const comboMultiplier = gameState.combo + 1 > 3 ? 1.5 : 
                            gameState.combo + 1 > 1 ? 1.2 : 1;
@@ -407,8 +455,11 @@ function App() {
       reputation: 5
     });
     
+    // Check achievements after successful repair
+    setTimeout(() => checkAllAchievements(), 100);
+    
     setCurrentScreen('reward');
-  }, [activeCustomer, customerPatience, gameState.combo, effects, recordSuccess, incrementCombo, addMoney, addXp, updateReputation]);
+  }, [activeCustomer, customerPatience, gameState.combo, effects, recordSuccess, incrementCombo, addMoney, addXp, updateReputation, recordPerfectRepair, checkAllAchievements]);
 
   // Continue from reward screen
   const handleContinueFromReward = useCallback(() => {
@@ -672,6 +723,55 @@ function App() {
           feedback={wrongFeedback}
           patienceLost={patienceLost}
           onContinue={handleContinueFromWrong}
+        />
+      )}
+
+      {/* Business Dashboard Button */}
+      {currentScreen === 'workshop' && !showDashboard && (
+        <button 
+          className="dashboard-btn"
+          onClick={() => setShowDashboard(true)}
+        >
+          📊 Dashboard
+        </button>
+      )}
+
+      {/* Business Dashboard */}
+      {showDashboard && (
+        <BusinessDashboard
+          gameState={gameState}
+          idleState={{
+            ...idleState,
+            getDailyExpenses: idleState.getDailyExpenses(),
+            getAssistantEffects: getAssistantEffects(),
+            getMarketingEffect: getMarketingEffect()
+          }}
+          onClose={() => setShowDashboard(false)}
+          onHireAssistant={hireAssistant}
+          onFireAssistant={fireAssistant}
+          onStartMarketing={startMarketing}
+          onCollectAchievement={dismissAchievement}
+        />
+      )}
+
+      {/* Offline Earnings Popup */}
+      {showOfflinePopup && offlineEarnings && (
+        <OfflineEarningsPopup
+          earnings={offlineEarnings.earnings}
+          hoursAway={offlineEarnings.hoursAway}
+          onCollect={collectOfflineEarnings}
+          onDismiss={dismissOfflinePopup}
+        />
+      )}
+
+      {/* Achievement Popup */}
+      {pendingAchievement && (
+        <AchievementPopup
+          achievement={pendingAchievement}
+          onDismiss={() => {
+            dismissAchievement();
+            checkAllAchievements();
+          }}
         />
       )}
     </div>

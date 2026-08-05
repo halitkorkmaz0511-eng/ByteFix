@@ -1,0 +1,720 @@
+.business-dashboard {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-bottom: 2px solid #3b82f6;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+  color: #f1f5f9;
+  font-size: 1.5rem;
+}
+
+.close-btn {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.dashboard-tabs {
+  display: flex;
+  background: #1e293b;
+  padding: 0 1rem;
+  gap: 0.5rem;
+  overflow-x: auto;
+}
+
+.dashboard-tabs button {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+}
+
+.dashboard-tabs button:hover {
+  color: #f1f5f9;
+}
+
+.dashboard-tabs button.active {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
+}
+
+.dashboard-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+/* Overview Tab */
+.overview-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dashboard-card {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #334155;
+}
+
+.dashboard-card h3 {
+  margin: 0 0 1rem 0;
+  color: #f1f5f9;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.health-meters {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.meter {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.meter span:first-child {
+  color: #94a3b8;
+  min-width: 100px;
+}
+
+.meter-bar {
+  flex: 1;
+  height: 12px;
+  background: #0f172a;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.5s ease;
+}
+
+.meter-fill.success {
+  background: linear-gradient(90deg, #22c55e, #4ade80);
+}
+
+.meter-fill.reputation {
+  background: linear-gradient(90deg, #eab308, #fbbf24);
+}
+
+.meter-value {
+  color: #f1f5f9;
+  min-width: 60px;
+  text-align: right;
+  font-weight: bold;
+}
+
+.finance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.finance-item {
+  background: #0f172a;
+  padding: 1rem;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.finance-label {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.finance-value {
+  color: #f1f5f9;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.finance-value.money {
+  color: #22c55e;
+}
+
+.finance-value.expense {
+  color: #ef4444;
+}
+
+.bonuses-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bonus-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #0f172a;
+  border-radius: 8px;
+  color: #f1f5f9;
+}
+
+.bonus-item.marketing {
+  border: 1px solid #eab308;
+  background: rgba(234, 179, 8, 0.1);
+}
+
+.bonus-value {
+  color: #22c55e;
+  font-weight: bold;
+}
+
+.bonus-empty {
+  color: #64748b;
+  text-align: center;
+  padding: 1rem;
+}
+
+.idle-stats {
+  display: flex;
+  gap: 2rem;
+}
+
+.idle-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.idle-label {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.idle-value {
+  color: #22c55e;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Team Tab */
+.team-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.team-section h3 {
+  color: #f1f5f9;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.no-team {
+  background: #1e293b;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  color: #64748b;
+}
+
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.team-member {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #1e293b;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid #334155;
+}
+
+.member-icon {
+  font-size: 2rem;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  border-radius: 12px;
+}
+
+.member-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.member-name {
+  color: #f1f5f9;
+  font-weight: bold;
+}
+
+.member-desc {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.member-salary {
+  color: #ef4444;
+  font-size: 0.8rem;
+}
+
+.fire-btn {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fire-btn:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.hire-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.hire-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #1e293b;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid #334155;
+}
+
+.hire-icon {
+  font-size: 2rem;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  border-radius: 12px;
+}
+
+.hire-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.hire-name {
+  color: #f1f5f9;
+  font-weight: bold;
+}
+
+.hire-desc {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.hire-costs {
+  display: flex;
+  gap: 1rem;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.hire-btn {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.hire-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.hire-btn:disabled {
+  background: #334155;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.locked-assistants {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #334155;
+}
+
+.locked-assistants h4 {
+  color: #64748b;
+  margin-bottom: 0.75rem;
+}
+
+.locked-card {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #0f172a;
+  border-radius: 8px;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.team-expenses {
+  background: #1e293b;
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+
+.team-expenses h3 {
+  color: #f1f5f9;
+  margin-bottom: 1rem;
+}
+
+.expense-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.expense-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  color: #94a3b8;
+  border-bottom: 1px solid #334155;
+}
+
+.expense-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  color: #ef4444;
+  font-weight: bold;
+  margin-top: 0.5rem;
+}
+
+/* Marketing Tab */
+.marketing-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.marketing-intro {
+  background: #1e293b;
+  padding: 1rem;
+  border-radius: 12px;
+}
+
+.marketing-intro p {
+  color: #94a3b8;
+  margin: 0 0 1rem 0;
+}
+
+.active-marketing {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: rgba(234, 179, 8, 0.1);
+  border: 1px solid #eab308;
+  border-radius: 8px;
+  color: #fbbf24;
+}
+
+.campaign-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.campaign-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #1e293b;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid #334155;
+}
+
+.campaign-card.active {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.campaign-card.cooldown {
+  opacity: 0.6;
+}
+
+.campaign-icon {
+  font-size: 2rem;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  border-radius: 12px;
+}
+
+.campaign-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.campaign-name {
+  color: #f1f5f9;
+  font-weight: bold;
+}
+
+.campaign-desc {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.campaign-effect {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #22c55e;
+}
+
+.campaign-action {
+  min-width: 100px;
+  text-align: right;
+}
+
+.run-btn {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.run-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.run-btn:disabled {
+  background: #334155;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.cooldown-btn {
+  background: #334155;
+  border: none;
+  color: #64748b;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  cursor: not-allowed;
+}
+
+.active-badge {
+  background: #22c55e;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: bold;
+}
+
+.marketing-stats {
+  background: #1e293b;
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+
+.marketing-stats h3 {
+  color: #f1f5f9;
+  margin-bottom: 1rem;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  color: #94a3b8;
+}
+
+/* Achievements Tab */
+.achievements-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.achievements-progress {
+  background: #1e293b;
+  padding: 1rem;
+  border-radius: 12px;
+  color: #fbbf24;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.achievement-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #1e293b;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid #334155;
+  position: relative;
+}
+
+.achievement-card.unlocked {
+  border-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.05);
+}
+
+.achievement-card.locked {
+  opacity: 0.5;
+}
+
+.achievement-icon {
+  font-size: 2rem;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  border-radius: 12px;
+}
+
+.achievement-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.achievement-name {
+  color: #f1f5f9;
+  font-weight: bold;
+}
+
+.achievement-desc {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.achievement-reward {
+  color: #22c55e;
+  font-size: 0.8rem;
+}
+
+.unlocked-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  color: #22c55e;
+  font-size: 1.2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-tabs {
+    padding: 0 0.5rem;
+  }
+  
+  .dashboard-tabs button {
+    padding: 0.75rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .dashboard-content {
+    padding: 1rem;
+  }
+  
+  .finance-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .hire-card,
+  .campaign-card,
+  .team-member {
+    flex-wrap: wrap;
+  }
+  
+  .hire-btn,
+  .run-btn {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+}
