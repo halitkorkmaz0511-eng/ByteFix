@@ -14,7 +14,8 @@ export function BusinessDashboard({
   onCollectAchievement,
   inventory,
   market,
-  company
+  company,
+  events
 }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [showHireConfirm, setShowHireConfirm] = useState(null);
@@ -59,6 +60,7 @@ export function BusinessDashboard({
   const getFinancialSummary = company?.getFinancialSummary || (() => ({}));
   const getAvailableLocations = company?.getAvailableLocations || (() => []);
   const getUpgradeEffects = company?.getUpgradeEffects || (() => ({}));
+  const eventState = events?.eventState || {};
 
   return (
     <div className="business-dashboard">
@@ -121,6 +123,12 @@ export function BusinessDashboard({
           onClick={() => setActiveTab('company')}
         >
           🏢 Company
+        </button>
+        <button 
+          className={activeTab === 'events' ? 'active' : ''}
+          onClick={() => setActiveTab('events')}
+        >
+          📑 Events
         </button>
       </div>
 
@@ -957,6 +965,132 @@ export function BusinessDashboard({
                   );
                 })}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Events Tab */}
+        {activeTab === 'events' && (
+          <div className="events-tab">
+            {/* Active Buffs */}
+            {eventState?.activeBuffs?.length > 0 && (
+              <div className="dashboard-card buffs-card">
+                <h3>✨ Active Effects</h3>
+                <div className="buffs-list">
+                  {eventState.activeBuffs.map(buff => (
+                    <div key={buff.id} className={`buff-item ${buff.type}`}>
+                      <span className="buff-icon">{buff.icon}</span>
+                      <span className="buff-name">{buff.name}</span>
+                      {buff.expiresAt && (
+                        <span className="buff-time">
+                          {Math.ceil((buff.expiresAt - Date.now()) / (24 * 60 * 60 * 1000))}d left
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Available Contracts */}
+            <div className="dashboard-card contracts-available-card">
+              <h3>📑 Available Contracts</h3>
+              {eventState?.availableContracts?.length > 0 ? (
+                <div className="contracts-list">
+                  {eventState.availableContracts.map(contract => (
+                    <div key={contract.id} className="contract-item available">
+                      <div className="contract-header">
+                        <span className="contract-icon">{contract.icon}</span>
+                        <span className="contract-name">{contract.name}</span>
+                      </div>
+                      <div className="contract-details">
+                        <span>Repairs: {contract.requiredRepairs}</span>
+                        <span>Duration: {contract.duration} days</span>
+                        <span className="contract-reward">+${contract.reward.toLocaleString()}</span>
+                      </div>
+                      <div className="contract-actions">
+                        <button
+                          className="accept-btn"
+                          onClick={() => company?.processOpportunity?.(contract.id, 'accept')}
+                          disabled={gameState.money < contract.requiredRepairs * 50}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          className="decline-btn"
+                          onClick={() => company?.declineContract?.(contract.id)}
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-contracts">No contracts available. Check back soon!</p>
+              )}
+            </div>
+
+            {/* Active Contracts */}
+            <div className="dashboard-card contracts-active-card">
+              <h3>🔄 Active Contracts</h3>
+              {eventState?.activeContracts?.length > 0 ? (
+                <div className="contracts-list">
+                  {eventState.activeContracts.map(contract => (
+                    <div key={contract.id} className="contract-item active">
+                      <div className="contract-header">
+                        <span className="contract-icon">{contract.icon}</span>
+                        <span className="contract-name">{contract.name}</span>
+                      </div>
+                      <div className="contract-progress">
+                        <div className="progress-bar">
+                          <div 
+                            className="progress-fill"
+                            style={{ 
+                              width: `${(contract.completedRepairs / contract.requiredRepairs) * 100}%` 
+                            }}
+                          />
+                        </div>
+                        <span className="progress-text">
+                          {contract.completedRepairs} / {contract.requiredRepairs} repairs
+                        </span>
+                      </div>
+                      <div className="contract-details">
+                        <span>Deadline: Day {contract.deadline}</span>
+                        <span className="contract-reward">+${contract.reward.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-contracts">No active contracts</p>
+              )}
+            </div>
+
+            {/* Event History */}
+            <div className="dashboard-card history-card">
+              <h3>📜 Event History</h3>
+              {eventState?.eventHistory?.length > 0 ? (
+                <div className="history-list">
+                  {eventState.eventHistory.slice(0, 20).map(item => (
+                    <div key={item.id} className="history-item">
+                      <span className="history-day">Day {item.day}</span>
+                      <span className="history-icon">{item.eventIcon}</span>
+                      <div className="history-content">
+                        <span className="history-event">{item.event}</span>
+                        {item.decision && (
+                          <span className="history-decision">{item.decision}</span>
+                        )}
+                        {item.result && (
+                          <span className="history-result">{item.result}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-history">No events recorded yet</p>
+              )}
             </div>
           </div>
         )}

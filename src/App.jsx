@@ -4,6 +4,7 @@ import { useIdleManagement } from './hooks/useIdleManagement';
 import { useInventory } from './hooks/useInventory';
 import { useMarket } from './hooks/useMarket';
 import { useCompany } from './hooks/useCompany';
+import { useEvents } from './hooks/useEvents';
 import { generateCustomer } from './data/customerData';
 import { problems } from './data/problems';
 import { soundSystem } from './utils/soundSystem';
@@ -28,6 +29,7 @@ import { StatsScreen } from './components/StatsScreen';
 import { SettingsScreen } from './components/SettingsScreen';
 import { BusinessDashboard } from './components/BusinessDashboard';
 import { OfflineEarningsPopup, AchievementPopup } from './components/Popups';
+import { DecisionModal, Notification } from './components/DecisionModal';
 
 import './App.css';
 
@@ -133,6 +135,25 @@ function App() {
     showUpgradePopup,
     showBranchUnlockPopup
   } = useCompany(gameState, addMoney, idleState);
+
+  // Events system
+  const {
+    eventState,
+    getActiveBuffsEffect,
+    addNotification,
+    notification,
+    checkForSpecialCustomer,
+    queueSpecialCustomer,
+    clearSpecialCustomer,
+    currentDecision,
+    processDecision,
+    addBuff,
+    updateContractProgress,
+    getContractStats,
+    processDailyEvents,
+    processOpportunity,
+    addToHistory
+  } = useEvents(gameState, addMoney, companyState, marketState, idleState);
 
   // Screen state
   const [currentScreen, setCurrentScreen] = useState('workshop');
@@ -918,7 +939,12 @@ function App() {
             checkMilestones,
             purchaseUpgrade: purchaseCompanyUpgrade,
             openBranch,
-            getAvailableLocations
+            getAvailableLocations,
+            processOpportunity
+          }}
+          events={{
+            eventState,
+            declineContract
           }}
           onClose={() => setShowDashboard(false)}
           onHireAssistant={hireAssistant}
@@ -948,6 +974,21 @@ function App() {
           }}
         />
       )}
+
+      {/* Decision Modal */}
+      {currentDecision && (
+        <DecisionModal
+          decision={currentDecision}
+          onDecision={(choiceId) => processDecision(currentDecision.eventId, choiceId)}
+          onClose={() => processDecision(currentDecision.eventId, currentDecision.choices[0].id)}
+        />
+      )}
+
+      {/* Notification Toast */}
+      <Notification
+        notification={notification}
+        onDismiss={() => {}}
+      />
     </div>
   );
 }

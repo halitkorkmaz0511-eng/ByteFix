@@ -1713,3 +1713,229 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Events Tab */
+.events-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.buffs-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.buff-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #0f172a;
+  border-radius: 20px;
+  border: 1px solid #334155;
+}
+
+.buff-item.buff {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.buff-item.debuff {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.buff-icon {
+  font-size: 1.2rem;
+}
+
+.buff-name {
+  color: #f1f5f9;
+  font-size: 0.85rem;
+}
+
+.buff-time {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.contracts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.contract-item {
+  padding: 1rem;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+}
+
+.contract-item.available {
+  border-color: #3b82f6;
+}
+
+.contract-item.active {
+  border-color: #22c55e;
+}
+
+.contract-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.contract-icon {
+  font-size: 1.5rem;
+}
+
+.contract-name {
+  color: #f1f5f9;
+  font-weight: bold;
+  flex: 1;
+}
+
+.contract-progress {
+  margin: 0.75rem 0;
+}
+
+.progress-bar {
+  height: 8px;
+  background: #1e293b;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.contract-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.contract-reward {
+  color: #22c55e;
+  font-weight: bold;
+}
+
+.contract-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.accept-btn {
+  flex: 1;
+  padding: 0.5rem;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.accept-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+}
+
+.accept-btn:disabled {
+  background: #334155;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.decline-btn {
+  padding: 0.5rem 1rem;
+  background: #334155;
+  border: none;
+  border-radius: 6px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.decline-btn:hover {
+  background: #475569;
+  color: #f1f5f9;
+}
+
+.no-contracts,
+.no-history {
+  color: #64748b;
+  text-align: center;
+  padding: 2rem;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.history-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #0f172a;
+  border-radius: 6px;
+}
+
+.history-day {
+  color: #64748b;
+  font-size: 0.75rem;
+  min-width: 50px;
+}
+
+.history-icon {
+  font-size: 1.2rem;
+}
+
+.history-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.history-event {
+  color: #f1f5f9;
+  font-size: 0.9rem;
+}
+
+.history-decision {
+  color: #3b82f6;
+  font-size: 0.8rem;
+}
+
+.history-result {
+  color: #22c55e;
+  font-size: 0.8rem;
+}
