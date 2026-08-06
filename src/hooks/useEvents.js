@@ -40,6 +40,19 @@ export function useEvents(gameState, addMoney, companyState, marketState, idleSt
   const lastEventDayRef = useRef(0);
   const lastMajorEventDayRef = useRef(0);
 
+  // Cleanup expired buffs on mount and periodically
+  useEffect(() => {
+    // Initial cleanup
+    cleanupExpiredBuffs();
+    
+    // Set up periodic cleanup every minute
+    const interval = setInterval(() => {
+      cleanupExpiredBuffs();
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, [cleanupExpiredBuffs]);
+
   // Save event state
   useEffect(() => {
     try {
@@ -238,10 +251,28 @@ export function useEvents(gameState, addMoney, companyState, marketState, idleSt
 
   // Add buff
   const addBuff = useCallback((buff) => {
-    setEventState(prev => ({
-      ...prev,
-      activeBuffs: [...prev.activeBuffs, buff]
-    }));
+    // Ensure buff has proper timestamps
+    const now = Date.now();
+    const buffWithTimestamps = {
+      ...buff,
+      id: buff.id || `buff_${now}_${Math.random().toString(36).substr(2, 9)}`,
+      startedAt: buff.startedAt || now,
+      expiresAt: buff.expiresAt || (now + 24 * 60 * 60 * 1000) // Default 24 hours
+    };
+    
+    // Prevent duplicates by checking if buff with same base ID exists
+    setEventState(prev => {
+      const exists = prev.activeBuffs.some(b => 
+        b.id === buffWithTimestamps.id || 
+        (b.name === buffWithTimestamps.name && b.expiresAt > now)
+      );
+      if (exists) return prev;
+      
+      return {
+        ...prev,
+        activeBuffs: [...prev.activeBuffs, buffWithTimestamps]
+      };
+    });
   }, []);
 
   // Remove expired buffs

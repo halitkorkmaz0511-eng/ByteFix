@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { generateCustomer } from '../data/customerData';
 import { calculateUpgradeEffects, getTotalXpForLevel } from '../data/upgrades';
+import { loadAndMigrateSave, saveGameState, DEFAULT_STATES, GAME_VERSION } from '../utils/saveUtils';
 
 // Default game state
 const defaultState = {
@@ -23,32 +24,25 @@ const defaultState = {
   hasSeenWelcome: false
 };
 
-const STORAGE_KEY = 'bytefix_save';
-
 export function useGameState() {
   const [gameState, setGameState] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        console.log('Loaded save:', parsed);
-        return { ...defaultState, ...parsed };
-      }
-    } catch (e) {
-      console.error('Failed to load save:', e);
+    const migrated = loadAndMigrateSave();
+    if (migrated && migrated.game) {
+      console.log('Loaded migrated save:', migrated.version);
+      return { ...defaultState, ...migrated.game };
     }
     console.log('Using default state');
     return defaultState;
   });
 
-  // Save to localStorage whenever state changes
+  // Save to localStorage whenever state changes (full state save)
   useEffect(() => {
-    try {
-      console.log('Saving game state:', gameState);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
-    } catch (e) {
-      console.error('Failed to save:', e);
-    }
+    const fullState = {
+      version: GAME_VERSION,
+      game: gameState,
+      timestamp: Date.now()
+    };
+    saveGameState(fullState);
   }, [gameState]);
 
   // Update money

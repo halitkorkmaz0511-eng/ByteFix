@@ -1061,6 +1061,7 @@ function App() {
         companyState={companyState}
         eventsState={eventState}
         gameState={gameState}
+        currentScreen={currentScreen}
       />
     </div>
   );
