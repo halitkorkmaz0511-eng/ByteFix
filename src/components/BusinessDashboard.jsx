@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { assistants, marketingCampaigns, achievements } from '../data/idleSystem';
 import { PARTS, SUPPLIERS, getStorageCapacity } from '../data/inventorySystem';
+import { COMPANY_TIERS, COMPANY_UPGRADES, COMPANY_MILESTONES, LOCATIONS } from '../data/companySystem';
 import './BusinessDashboard.css';
 
 export function BusinessDashboard({
@@ -12,7 +13,8 @@ export function BusinessDashboard({
   onStartMarketing,
   onCollectAchievement,
   inventory,
-  market
+  market,
+  company
 }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [showHireConfirm, setShowHireConfirm] = useState(null);
@@ -20,6 +22,7 @@ export function BusinessDashboard({
   const [orderSupplier, setOrderSupplier] = useState('tech_supply');
   const [orderResult, setOrderResult] = useState(null);
   const [selectedCompetitor, setSelectedCompetitor] = useState(null);
+  const [selectedUpgrade, setSelectedUpgrade] = useState(null);
 
   const dailyExpenses = idleState.getDailyExpenses;
   const assistantEffects = idleState.getAssistantEffects;
@@ -47,6 +50,15 @@ export function BusinessDashboard({
   const REPAIR_CATEGORIES = market?.REPAIR_CATEGORIES || {};
   const PRICING_TIERS = market?.PRICING_TIERS || {};
   const SPECIALIZATIONS = market?.SPECIALIZATIONS || {};
+
+  // Company data
+  const companyState = company?.companyState || {};
+  const getCompanyValue = company?.getCompanyValue || (() => 0);
+  const getCompanyTier = company?.getCompanyTier || (() => COMPANY_TIERS[1]);
+  const getCurrentStrategy = company?.getCurrentStrategy || (() => ({ id: 'balanced', name: 'Balanced' }));
+  const getFinancialSummary = company?.getFinancialSummary || (() => ({}));
+  const getAvailableLocations = company?.getAvailableLocations || (() => []);
+  const getUpgradeEffects = company?.getUpgradeEffects || (() => ({}));
 
   return (
     <div className="business-dashboard">
@@ -103,6 +115,12 @@ export function BusinessDashboard({
           onClick={() => setActiveTab('news')}
         >
           📰 News
+        </button>
+        <button 
+          className={activeTab === 'company' ? 'active' : ''}
+          onClick={() => setActiveTab('company')}
+        >
+          🏢 Company
         </button>
       </div>
 
@@ -777,6 +795,168 @@ export function BusinessDashboard({
                   <p>No news yet. Complete repairs to see market updates!</p>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Company Tab */}
+        {activeTab === 'company' && (
+          <div className="company-tab">
+            {/* Company Overview */}
+            <div className="dashboard-card company-overview-card">
+              <div className="company-header">
+                <span className="company-icon">{getCompanyTier().icon}</span>
+                <div className="company-info">
+                  <h3>{getCompanyTier().name}</h3>
+                  <p>Company Value: ${getCompanyValue().toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="company-stats">
+                <div className="company-stat">
+                  <span className="stat-label">Cash</span>
+                  <span className="stat-value">${gameState.money?.toLocaleString() || 0}</span>
+                </div>
+                <div className="company-stat">
+                  <span className="stat-label">Branches</span>
+                  <span className="stat-value">{companyState.branches?.length || 1}</span>
+                </div>
+                <div className="company-stat">
+                  <span className="stat-label">Upgrades</span>
+                  <span className="stat-value">{companyState.upgrades?.length || 0}</span>
+                </div>
+                <div className="company-stat">
+                  <span className="stat-label">Strategy</span>
+                  <span className="stat-value">{getCurrentStrategy().name}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Financial Summary */}
+            <div className="dashboard-card financial-card">
+              <h3>💰 Financial Summary</h3>
+              <div className="financial-grid">
+                <div className="financial-item">
+                  <span className="fin-label">Today's Revenue</span>
+                  <span className="fin-value positive">+${getFinancialSummary().dailyRevenue?.toLocaleString() || 0}</span>
+                </div>
+                <div className="financial-item">
+                  <span className="fin-label">Today's Expenses</span>
+                  <span className="fin-value negative">-${getFinancialSummary().dailyExpenses?.toLocaleString() || 0}</span>
+                </div>
+                <div className="financial-item">
+                  <span className="fin-label">Net Profit</span>
+                  <span className={`fin-value ${getFinancialSummary().dailyProfit >= 0 ? 'positive' : 'negative'}`}>
+                    {getFinancialSummary().dailyProfit >= 0 ? '+' : ''}${getFinancialSummary().dailyProfit?.toLocaleString() || 0}
+                  </span>
+                </div>
+                <div className="financial-item">
+                  <span className="fin-label">Total Revenue</span>
+                  <span className="fin-value">${companyState.totalRevenue?.toLocaleString() || 0}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Branches */}
+            <div className="dashboard-card branches-card">
+              <h3>🏪 Your Locations</h3>
+              <div className="branches-list">
+                {companyState.branches?.map(branch => (
+                  <div key={branch.id} className="branch-item">
+                    <span className="branch-icon">📍</span>
+                    <div className="branch-info">
+                      <span className="branch-name">{branch.locationName}</span>
+                      <span className="branch-level">Level {branch.level}</span>
+                    </div>
+                    <span className="branch-demand">
+                      {(branch.customerDemand * 100).toFixed(0)}% demand
+                    </span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Available Locations */}
+              <h4>Available Locations</h4>
+              <div className="locations-list">
+                {getAvailableLocations().map(loc => (
+                  <div key={loc.id} className={`location-item ${!loc.canAfford ? 'locked' : ''}`}>
+                    <span className="location-icon">{loc.icon}</span>
+                    <div className="location-info">
+                      <span className="location-name">{loc.name}</span>
+                      <span className="location-cost">${loc.unlockCost.toLocaleString()}</span>
+                    </div>
+                    <button
+                      className="expand-btn"
+                      disabled={!loc.canAfford}
+                      onClick={() => {
+                        if (loc.canAfford && company?.openBranch) {
+                          company.openBranch(loc.id);
+                        }
+                      }}
+                    >
+                      {loc.canAfford ? 'Open' : 'Locked'}
+                    </button>
+                  </div>
+                ))}
+                {getAvailableLocations().length === 0 && (
+                  <p className="no-locations">No more locations available at your tier</p>
+                )}
+              </div>
+            </div>
+
+            {/* Company Upgrades */}
+            <div className="dashboard-card upgrades-card">
+              <h3>🚀 Company Upgrades</h3>
+              <div className="upgrades-grid">
+                {Object.values(COMPANY_UPGRADES).map(upgrade => {
+                  const owned = companyState.upgrades?.includes(upgrade.id);
+                  const currentTier = getCompanyTier();
+                  const locked = upgrade.tier && currentTier.id < upgrade.tier;
+                  
+                  return (
+                    <div
+                      key={upgrade.id}
+                      className={`upgrade-card ${owned ? 'owned' : ''} ${locked ? 'locked' : ''}`}
+                      onClick={() => {
+                        if (!owned && !locked && gameState.money >= upgrade.cost && company?.purchaseUpgrade) {
+                          company.purchaseUpgrade(upgrade.id);
+                        } else {
+                          setSelectedUpgrade(upgrade);
+                        }
+                      }}
+                    >
+                      <span className="upgrade-icon">{upgrade.icon}</span>
+                      <span className="upgrade-name">{upgrade.name}</span>
+                      <span className="upgrade-desc">{upgrade.description}</span>
+                      {locked && <span className="upgrade-tier">Tier {upgrade.tier}+</span>}
+                      {owned && <span className="upgrade-owned">Owned</span>}
+                      {!owned && !locked && (
+                        <span className="upgrade-cost">${upgrade.cost.toLocaleString()}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Milestones */}
+            <div className="dashboard-card milestones-card">
+              <h3>🎯 Milestones</h3>
+              <div className="milestones-progress">
+                <span>{companyState.unlockedMilestones?.length || 0} / {COMPANY_MILESTONES.length} Unlocked</span>
+              </div>
+              <div className="milestones-grid">
+                {COMPANY_MILESTONES.map(milestone => {
+                  const unlocked = companyState.unlockedMilestones?.includes(milestone.id);
+                  return (
+                    <div key={milestone.id} className={`milestone-item ${unlocked ? 'unlocked' : ''}`}>
+                      <span className="milestone-icon">{milestone.icon}</span>
+                      <span className="milestone-name">{milestone.name}</span>
+                      <span className="milestone-desc">{milestone.description}</span>
+                      {unlocked && <span className="milestone-check">✓</span>}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}

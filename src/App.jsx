@@ -3,6 +3,7 @@ import { useGameState } from './hooks/useGameState';
 import { useIdleManagement } from './hooks/useIdleManagement';
 import { useInventory } from './hooks/useInventory';
 import { useMarket } from './hooks/useMarket';
+import { useCompany } from './hooks/useCompany';
 import { generateCustomer } from './data/customerData';
 import { problems } from './data/problems';
 import { soundSystem } from './utils/soundSystem';
@@ -113,6 +114,25 @@ function App() {
     PRICING_TIERS,
     SPECIALIZATIONS
   } = useMarket(gameState);
+
+  // Company system
+  const {
+    companyState,
+    getCompanyValue,
+    getCompanyTier,
+    getCurrentStrategy,
+    getUpgradeEffects,
+    getFinancialSummary,
+    checkMilestones,
+    recordTransaction,
+    updateStrategyMetrics,
+    purchaseUpgrade: purchaseCompanyUpgrade,
+    openBranch,
+    getAvailableLocations,
+    showMilestonePopup,
+    showUpgradePopup,
+    showBranchUnlockPopup
+  } = useCompany(gameState, addMoney, idleState);
 
   // Screen state
   const [currentScreen, setCurrentScreen] = useState('workshop');
@@ -887,6 +907,18 @@ function App() {
             REPAIR_CATEGORIES,
             PRICING_TIERS,
             SPECIALIZATIONS
+          }}
+          company={{
+            companyState,
+            getCompanyValue,
+            getCompanyTier,
+            getCurrentStrategy,
+            getUpgradeEffects,
+            getFinancialSummary,
+            checkMilestones,
+            purchaseUpgrade: purchaseCompanyUpgrade,
+            openBranch,
+            getAvailableLocations
           }}
           onClose={() => setShowDashboard(false)}
           onHireAssistant={hireAssistant}
