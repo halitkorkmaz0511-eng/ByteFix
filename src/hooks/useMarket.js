@@ -274,7 +274,15 @@ export function useMarket(gameState) {
 
   // Get demand for a repair category
   const getCategoryDemand = useCallback((categoryId) => {
-    return getEffectiveDemand(categoryId, marketState, marketState.activeEvent?.effects || {});
+    if (categoryId) {
+      return getEffectiveDemand(categoryId, marketState, marketState.activeEvent?.effects || {});
+    }
+    // Return all category demands as a dictionary
+    const demands = {};
+    Object.keys(REPAIR_CATEGORIES).forEach(catId => {
+      demands[catId] = getEffectiveDemand(catId, marketState, marketState.activeEvent?.effects || {});
+    });
+    return demands;
   }, [marketState]);
 
   // Get price for a repair category

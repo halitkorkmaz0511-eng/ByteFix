@@ -239,7 +239,33 @@ function App() {
     if (customerQueue.length >= maxQueueSize) return false;
 
     const difficulty = Math.min(gameState.shopLevel, effects.maxDifficulty);
-    const newCustomer = generateCustomer(difficulty);
+    
+    // Build modifiers from all systems
+    const modifiers = {
+      // Market demand affects customer types
+      marketDemand: getCategoryDemand ? getCategoryDemand() : {},
+      
+      // Pricing affects customer volume
+      pricingTier: marketState?.playerPricing?.general || 'normal',
+      
+      // Specialization attracts related customers
+      specialization: marketState?.playerSpecialization || null,
+      
+      // Events buff affects customer flow
+      customerFlowBonus: getActiveBuffsEffect?.()?.customerFlow || 1,
+      
+      // Branch location affects customer mix
+      branchLocation: companyState?.branches?.[0] || null
+    };
+    
+    // Check for special customer
+    const specialCustomer = checkForSpecialCustomer?.();
+    if (specialCustomer) {
+      modifiers.specialCustomer = specialCustomer;
+      queueSpecialCustomer?.(specialCustomer);
+    }
+    
+    const newCustomer = generateCustomer(difficulty, modifiers);
     
     soundSystem.playCustomerArrival();
     setNewCustomerArriving(newCustomer);
@@ -270,7 +296,20 @@ function App() {
     }, 1500);
     
     return true;
-  }, [currentScreen, customerQueue.length, gameState.shopLevel, effects.maxDifficulty, gameState.hasSeenWelcome, moveToCounter]);
+  }, [
+    currentScreen, 
+    customerQueue.length, 
+    gameState.shopLevel, 
+    effects.maxDifficulty, 
+    gameState.hasSeenWelcome, 
+    moveToCounter,
+    getCategoryDemand,
+    marketState,
+    getActiveBuffsEffect,
+    companyState,
+    checkForSpecialCustomer,
+    queueSpecialCustomer
+  ]);
 
   // Start automatic customer spawning
   useEffect(() => {
@@ -520,9 +559,25 @@ function App() {
       });
     }
     
+    // Update contract progress if customer matches active contracts
+    if (activeCustomer && updateContractProgress) {
+      // Determine customer category for contract matching
+      const customerCategories = activeCustomer.categories || [];
+      // Update for each category
+      customerCategories.forEach(cat => {
+        updateContractProgress(cat);
+      });
+    }
+    
     const basePayment = activeCustomer.basePayment;
     const speedBonus = customerPatience > 70 ? Math.floor(basePayment * 0.3) : 0;
     const perfectBonus = customerPatience === activeCustomer.maxPatience ? Math.floor(basePayment * 0.2) : 0;
+    
+    // Apply special customer effects
+    let finalReputation = 5;
+    if (activeCustomer?.isSpecial && activeCustomer?.reputationImpact) {
+      finalReputation = Math.floor(finalReputation * activeCustomer.reputationImpact);
+    }
     
     // Check for perfect repair (100% patience remaining)
     if (customerPatience === activeCustomer.maxPatience) {
@@ -543,7 +598,7 @@ function App() {
     // Update state
     addMoney(finalPayment);
     addXp(xpReward);
-    updateReputation(5);
+    updateReputation(finalReputation);
     
     setReward({
       payment: basePayment,
@@ -551,14 +606,14 @@ function App() {
       perfectBonus,
       combo: gameState.combo + 1,
       xp: xpReward,
-      reputation: 5
+      reputation: finalReputation
     });
     
     // Check achievements after successful repair
     setTimeout(() => checkAllAchievements(), 100);
     
     setCurrentScreen('reward');
-  }, [activeCustomer, customerPatience, gameState.combo, effects, recordSuccess, incrementCombo, addMoney, addXp, updateReputation, recordPerfectRepair, checkAllAchievements, fixedProblems, consumePartsForRepair]);
+  }, [activeCustomer, customerPatience, gameState.combo, effects, recordSuccess, incrementCombo, addMoney, addXp, updateReputation, recordPerfectRepair, checkAllAchievements, fixedProblems, consumePartsForRepair, updateContractProgress]);
 
   // Continue from reward screen
   const handleContinueFromReward = useCallback(() => {
