@@ -155,6 +155,14 @@ function App() {
     addToHistory
   } = useEvents(gameState, addMoney, companyState, marketState, idleState);
 
+  // Combine upgrade effects with event buff effects
+  const combinedEffects = {
+    ...effects,
+    // Apply event buff effects
+    paymentBonus: effects.paymentBonus * (getActiveBuffsEffect?.()?.reputationGain || 1),
+    miniGameSpeed: effects.miniGameSpeed * (getActiveBuffsEffect?.()?.workshopEfficiency || 1)
+  };
+
   // Screen state
   const [currentScreen, setCurrentScreen] = useState('workshop');
   
@@ -238,7 +246,7 @@ function App() {
     const maxQueueSize = getQueueCapacity(gameState.shopLevel);
     if (customerQueue.length >= maxQueueSize) return false;
 
-    const difficulty = Math.min(gameState.shopLevel, effects.maxDifficulty);
+    const difficulty = Math.min(gameState.shopLevel, combinedEffects.maxDifficulty);
     
     // Build modifiers from all systems
     const modifiers = {
@@ -300,7 +308,7 @@ function App() {
     currentScreen, 
     customerQueue.length, 
     gameState.shopLevel, 
-    effects.maxDifficulty, 
+    combinedEffects.maxDifficulty, 
     gameState.hasSeenWelcome, 
     moveToCounter,
     getCategoryDemand,
@@ -588,8 +596,8 @@ function App() {
     const comboMultiplier = gameState.combo + 1 > 3 ? 1.5 : 
                            gameState.combo + 1 > 1 ? 1.2 : 1;
     
-    // Apply upgrade bonuses
-    const finalPayment = Math.floor((basePayment + speedBonus + perfectBonus) * effects.paymentBonus * comboMultiplier);
+    // Apply upgrade bonuses and event buffs
+    const finalPayment = Math.floor((basePayment + speedBonus + perfectBonus) * combinedEffects.paymentBonus * comboMultiplier);
     
     // Calculate XP
     const xpReward = problemCount === 1 ? 50 : 
@@ -613,7 +621,7 @@ function App() {
     setTimeout(() => checkAllAchievements(), 100);
     
     setCurrentScreen('reward');
-  }, [activeCustomer, customerPatience, gameState.combo, effects, recordSuccess, incrementCombo, addMoney, addXp, updateReputation, recordPerfectRepair, checkAllAchievements, fixedProblems, consumePartsForRepair, updateContractProgress]);
+  }, [activeCustomer, customerPatience, gameState.combo, combinedEffects, recordSuccess, incrementCombo, addMoney, addXp, updateReputation, recordPerfectRepair, checkAllAchievements, fixedProblems, consumePartsForRepair, updateContractProgress]);
 
   // Continue from reward screen
   const handleContinueFromReward = useCallback(() => {
@@ -748,7 +756,7 @@ function App() {
               <div className="management-panel">
                 <WorkshopManagement
                   gameState={gameState}
-                  effects={effects}
+                  effects={combinedEffects}
                   onPurchaseUpgrade={purchaseUpgrade}
                   onOpenShop={handleOpenShop}
                   onOpenStats={handleOpenStats}
@@ -800,7 +808,7 @@ function App() {
           // Render the appropriate mini-game based on current problem
           const miniGameProps = {
             onComplete: handleMiniGameComplete,
-            speedMultiplier: effects.miniGameSpeed
+            speedMultiplier: combinedEffects.miniGameSpeed
           };
           
           if (currentProblem === 'cpu_overheating') {
