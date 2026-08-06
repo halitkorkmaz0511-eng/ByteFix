@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useGameState } from './hooks/useGameState';
 import { useIdleManagement } from './hooks/useIdleManagement';
+import { useInventory } from './hooks/useInventory';
 import { generateCustomer } from './data/customerData';
 import { problems } from './data/problems';
 import { soundSystem } from './utils/soundSystem';
@@ -65,6 +66,31 @@ function App() {
     getMarketingEffect,
     resetIdleState
   } = useIdleManagement(gameState, addMoney, addXp, updateReputation);
+
+  // Inventory system
+  const {
+    inventoryState,
+    getCapacity,
+    getTotalItems,
+    getAvailableStorage,
+    getLowStockItems,
+    getInventoryValue,
+    canPerformRepair,
+    getRequiredParts,
+    placeOrder,
+    consumePartsForRepair,
+    processDeliveries,
+    advanceDay,
+    showDeliveryNotification,
+    deliveryItems,
+    dismissDeliveryNotification,
+    showOrderFailedNotification,
+    failedOrderInfo,
+    dismissFailedNotification,
+    getActiveOrders,
+    getOrderETA,
+    resetInventory
+  } = useInventory(gameState, addMoney);
 
   // Screen state
   const [currentScreen, setCurrentScreen] = useState('workshop');
@@ -421,6 +447,13 @@ function App() {
     recordSuccess();
     incrementCombo();
     
+    // Consume parts for each fixed problem
+    if (activeCustomer && fixedProblems.length > 0) {
+      fixedProblems.forEach(problemId => {
+        consumePartsForRepair(problemId, true);
+      });
+    }
+    
     const basePayment = activeCustomer.basePayment;
     const speedBonus = customerPatience > 70 ? Math.floor(basePayment * 0.3) : 0;
     const perfectBonus = customerPatience === activeCustomer.maxPatience ? Math.floor(basePayment * 0.2) : 0;
@@ -459,7 +492,7 @@ function App() {
     setTimeout(() => checkAllAchievements(), 100);
     
     setCurrentScreen('reward');
-  }, [activeCustomer, customerPatience, gameState.combo, effects, recordSuccess, incrementCombo, addMoney, addXp, updateReputation, recordPerfectRepair, checkAllAchievements]);
+  }, [activeCustomer, customerPatience, gameState.combo, effects, recordSuccess, incrementCombo, addMoney, addXp, updateReputation, recordPerfectRepair, checkAllAchievements, fixedProblems, consumePartsForRepair]);
 
   // Continue from reward screen
   const handleContinueFromReward = useCallback(() => {
@@ -610,6 +643,23 @@ function App() {
                 customer={activeCustomer}
                 onBack={handleBackFromDiagnostic}
                 onRepair={handleRepair}
+                inventory={{
+                  getRequiredParts,
+                  canPerformRepair,
+                  getItemQuantity: (id) => inventoryState.items[id] || 0,
+                  getCapacity,
+                  getTotalItems,
+                  getAvailableStorage,
+                  getLowStockItems,
+                  getInventoryValue,
+                  placeOrder,
+                  getActiveOrders,
+                  getOrderETA,
+                  gameState,
+                  showOrderSuccess: (order) => {
+                    // Brief visual feedback handled in component
+                  }
+                }}
               />
             </>
           );
@@ -726,6 +776,38 @@ function App() {
         />
       )}
 
+      {/* Inventory Delivery Notification */}
+      {showDeliveryNotification && (
+        <div className="inventory-notification delivery-notification">
+          <div className="notification-content">
+            <span className="notification-icon">📦</span>
+            <div className="notification-text">
+              <strong>Hardware Shipment Arrived!</strong>
+              {deliveryItems.map((item, i) => (
+                <span key={i}>+{item.quantity}x {item.partId.replace('_', ' ')}</span>
+              ))}
+            </div>
+            <button onClick={dismissDeliveryNotification}>✕</button>
+          </div>
+        </div>
+      )}
+
+      {/* Order Failed Notification */}
+      {showOrderFailedNotification && failedOrderInfo && (
+        <div className="inventory-notification failed-notification">
+          <div className="notification-content">
+            <span className="notification-icon">⚠️</span>
+            <div className="notification-text">
+              <strong>Delivery Failed!</strong>
+              {failedOrderInfo.map((order, i) => (
+                <span key={i}>+${order.cost} refunded for {order.partId}</span>
+              ))}
+            </div>
+            <button onClick={dismissFailedNotification}>✕</button>
+          </div>
+        </div>
+      )}
+
       {/* Business Dashboard Button */}
       {currentScreen === 'workshop' && !showDashboard && (
         <button 
@@ -745,6 +827,17 @@ function App() {
             getDailyExpenses: idleState.getDailyExpenses(),
             getAssistantEffects: getAssistantEffects(),
             getMarketingEffect: getMarketingEffect()
+          }}
+          inventory={{
+            inventoryState,
+            getCapacity,
+            getTotalItems,
+            getAvailableStorage,
+            getLowStockItems,
+            getInventoryValue,
+            placeOrder,
+            getActiveOrders,
+            getOrderETA
           }}
           onClose={() => setShowDashboard(false)}
           onHireAssistant={hireAssistant}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { assistants, marketingCampaigns, achievements } from '../data/idleSystem';
+import { PARTS, SUPPLIERS, getStorageCapacity } from '../data/inventorySystem';
 import './BusinessDashboard.css';
 
 export function BusinessDashboard({
@@ -9,14 +10,18 @@ export function BusinessDashboard({
   onHireAssistant,
   onFireAssistant,
   onStartMarketing,
-  onCollectAchievement
+  onCollectAchievement,
+  inventory
 }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [showHireConfirm, setShowHireConfirm] = useState(null);
+  const [orderQuantity, setOrderQuantity] = useState(1);
+  const [orderSupplier, setOrderSupplier] = useState('tech_supply');
+  const [orderResult, setOrderResult] = useState(null);
 
-  const dailyExpenses = idleState.getDailyExpenses();
-  const assistantEffects = idleState.getAssistantEffects();
-  const marketingEffect = idleState.getMarketingEffect();
+  const dailyExpenses = idleState.getDailyExpenses;
+  const assistantEffects = idleState.getAssistantEffects;
+  const marketingEffect = idleState.getMarketingEffect;
 
   // Calculate business health
   const successRate = gameState.totalCustomers > 0
@@ -26,6 +31,13 @@ export function BusinessDashboard({
   const avgEarnings = gameState.totalCustomers > 0
     ? Math.round(gameState.totalMoneyEarned / gameState.totalCustomers)
     : 0;
+
+  // Inventory data
+  const inventoryItems = inventory?.inventoryState?.items || {};
+  const totalItems = inventory?.getTotalItems?.() || 0;
+  const capacity = inventory?.getCapacity?.() || 50;
+  const lowStockItems = inventory?.getLowStockItems?.() || [];
+  const activeOrders = inventory?.getActiveOrders?.() || [];
 
   return (
     <div className="business-dashboard">
@@ -58,6 +70,12 @@ export function BusinessDashboard({
           onClick={() => setActiveTab('achievements')}
         >
           🏆 Achievements
+        </button>
+        <button 
+          className={activeTab === 'inventory' ? 'active' : ''}
+          onClick={() => setActiveTab('inventory')}
+        >
+          📦 Inventory
         </button>
       </div>
 
@@ -382,6 +400,155 @@ export function BusinessDashboard({
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'inventory' && (
+          <div className="inventory-tab">
+            {/* Storage Overview */}
+            <div className="dashboard-card storage-card">
+              <h3>📦 Storage Capacity</h3>
+              <div className="storage-meter">
+                <span>Used: {totalItems} / {capacity}</span>
+                <div className="storage-bar">
+                  <div 
+                    className="storage-fill" 
+                    style={{ width: `${Math.min(100, (totalItems / capacity) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Low Stock Warnings */}
+            {lowStockItems.length > 0 && (
+              <div className="dashboard-card low-stock-card">
+                <h3>⚠️ Low Stock Warnings</h3>
+                <div className="low-stock-list">
+                  {lowStockItems.map(item => (
+                    <div key={item.partId} className="low-stock-item">
+                      <span className="item-icon">{PARTS[item.partId]?.icon || '🔧'}</span>
+                      <span className="item-name">{PARTS[item.partId]?.name || item.partId}</span>
+                      <span className="item-qty">{item.quantity} left</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Current Inventory */}
+            <div className="dashboard-card inventory-card">
+              <h3>🔧 Parts Inventory</h3>
+              <div className="parts-grid">
+                {Object.keys(PARTS).map(partId => {
+                  const part = PARTS[partId];
+                  const qty = inventoryItems[partId] || 0;
+                  const isLow = lowStockItems.some(i => i.partId === partId);
+                  return (
+                    <div key={partId} className={`part-card ${isLow ? 'low' : ''} ${qty === 0 ? 'empty' : ''}`}>
+                      <span className="part-icon">{part.icon}</span>
+                      <span className="part-name">{part.name}</span>
+                      <span className="part-qty">{qty}</span>
+                      {isLow && qty > 0 && <span className="low-badge">Low</span>}
+                      {qty === 0 && <span className="empty-badge">Empty</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Quick Order */}
+            <div className="dashboard-card order-card">
+              <h3>🛒 Quick Order</h3>
+              <div className="order-controls">
+                <select 
+                  value={orderSupplier}
+                  onChange={(e) => setOrderSupplier(e.target.value)}
+                  className="supplier-select"
+                >
+                  <option value="budget_parts">BudgetParts (-15%, 3 days)</option>
+                  <option value="tech_supply">TechSupply (normal, 1 day)</option>
+                  <option value="pro_hardware">ProHardware (+20%, same day) {gameState.shopLevel < 3 ? '(Lvl 3+)' : ''}</option>
+                </select>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={orderQuantity}
+                  onChange={(e) => setOrderQuantity(parseInt(e.target.value) || 1)}
+                  className="qty-input"
+                />
+              </div>
+              
+              <div className="order-parts">
+                {Object.keys(PARTS).map(partId => {
+                  const part = PARTS[partId];
+                  const supplier = SUPPLIERS[orderSupplier];
+                  const price = Math.floor(part.basePrice * (supplier?.priceMultiplier || 1));
+                  const isAvailable = !supplier?.unlockLevel || gameState.shopLevel >= supplier.unlockLevel;
+                  
+                  return (
+                    <div key={partId} className="order-row">
+                      <span className="order-icon">{part.icon}</span>
+                      <span className="order-name">{part.name}</span>
+                      <span className="order-price">${price * orderQuantity}</span>
+                      <button
+                        className="order-btn"
+                        disabled={!isAvailable || gameState.money < price * orderQuantity}
+                        onClick={() => {
+                          if (inventory?.placeOrder) {
+                            const result = inventory.placeOrder(partId, orderQuantity, orderSupplier);
+                            setOrderResult(result.success ? `Ordered ${orderQuantity}x ${part.name}` : result.reason);
+                            setTimeout(() => setOrderResult(null), 3000);
+                          }
+                        }}
+                      >
+                        Order
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {orderResult && (
+                <div className={`order-result ${orderResult.includes('Ordered') ? 'success' : 'error'}`}>
+                  {orderResult}
+                </div>
+              )}
+            </div>
+
+            {/* Active Orders */}
+            {activeOrders.length > 0 && (
+              <div className="dashboard-card orders-card">
+                <h3>📬 Active Orders</h3>
+                <div className="orders-list">
+                  {activeOrders.map(order => {
+                    const part = PARTS[order.partId];
+                    const supplier = SUPPLIERS[order.supplierId];
+                    const eta = inventory?.getOrderETA?.(order) || 1;
+                    
+                    return (
+                      <div key={order.id} className="order-item">
+                        <span className="order-icon">{part?.icon || '🔧'}</span>
+                        <div className="order-info">
+                          <span className="order-name">{order.quantity}x {part?.name || order.partId}</span>
+                          <span className="order-supplier">via {supplier?.name || order.supplierId}</span>
+                        </div>
+                        <span className="order-eta">{eta > 0 ? `${eta} day(s)` : 'Today!'}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Delivery Status */}
+            <div className="dashboard-card delivery-card">
+              <h3>📅 Current Day</h3>
+              <div className="day-info">
+                <span className="day-number">Day {inventory?.inventoryState?.currentDay || 1}</span>
+                <p className="day-hint">Orders arrive based on supplier delivery times</p>
+              </div>
             </div>
           </div>
         )}

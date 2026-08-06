@@ -88,3 +88,72 @@
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
 }
+
+/* Inventory Notifications */
+.inventory-notification {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 2000;
+  animation: slideIn 0.3s ease;
+  max-width: 350px;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.inventory-notification .notification-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: #1e293b;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.delivery-notification .notification-content {
+  border: 2px solid #22c55e;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, #1e293b 100%);
+}
+
+.failed-notification .notification-content {
+  border: 2px solid #f59e0b;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, #1e293b 100%);
+}
+
+.notification-icon {
+  font-size: 1.5rem;
+}
+
+.notification-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.notification-text strong {
+  color: #f1f5f9;
+  font-size: 0.95rem;
+}
+
+.notification-text span {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.inventory-notification button {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.25rem;
+}
+
+.inventory-notification button:hover {
+  color: #f1f5f9;
+}
