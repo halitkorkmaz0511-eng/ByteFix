@@ -30,6 +30,7 @@ import { SettingsScreen } from './components/SettingsScreen';
 import { BusinessDashboard } from './components/BusinessDashboard';
 import { OfflineEarningsPopup, AchievementPopup } from './components/Popups';
 import { DecisionModal, Notification } from './components/DecisionModal';
+import { GameHints } from './components/GameHints';
 
 import './App.css';
 
@@ -1051,6 +1052,15 @@ function App() {
       <Notification
         notification={notification}
         onDismiss={() => {}}
+      />
+
+      {/* Game Hints */}
+      <GameHints
+        marketState={marketState}
+        inventoryState={inventoryState}
+        companyState={companyState}
+        eventsState={eventState}
+        gameState={gameState}
       />
     </div>
   );
