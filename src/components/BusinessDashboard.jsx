@@ -11,13 +11,15 @@ export function BusinessDashboard({
   onFireAssistant,
   onStartMarketing,
   onCollectAchievement,
-  inventory
+  inventory,
+  market
 }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [showHireConfirm, setShowHireConfirm] = useState(null);
   const [orderQuantity, setOrderQuantity] = useState(1);
   const [orderSupplier, setOrderSupplier] = useState('tech_supply');
   const [orderResult, setOrderResult] = useState(null);
+  const [selectedCompetitor, setSelectedCompetitor] = useState(null);
 
   const dailyExpenses = idleState.getDailyExpenses;
   const assistantEffects = idleState.getAssistantEffects;
@@ -38,6 +40,13 @@ export function BusinessDashboard({
   const capacity = inventory?.getCapacity?.() || 50;
   const lowStockItems = inventory?.getLowStockItems?.() || [];
   const activeOrders = inventory?.getActiveOrders?.() || [];
+
+  // Market data
+  const marketState = market?.marketState || {};
+  const getMarketSummary = market?.getMarketSummary || (() => ({}));
+  const REPAIR_CATEGORIES = market?.REPAIR_CATEGORIES || {};
+  const PRICING_TIERS = market?.PRICING_TIERS || {};
+  const SPECIALIZATIONS = market?.SPECIALIZATIONS || {};
 
   return (
     <div className="business-dashboard">
@@ -76,6 +85,24 @@ export function BusinessDashboard({
           onClick={() => setActiveTab('inventory')}
         >
           📦 Inventory
+        </button>
+        <button 
+          className={activeTab === 'market' ? 'active' : ''}
+          onClick={() => setActiveTab('market')}
+        >
+          📈 Market
+        </button>
+        <button 
+          className={activeTab === 'competitors' ? 'active' : ''}
+          onClick={() => setActiveTab('competitors')}
+        >
+          🏢 Competitors
+        </button>
+        <button 
+          className={activeTab === 'news' ? 'active' : ''}
+          onClick={() => setActiveTab('news')}
+        >
+          📰 News
         </button>
       </div>
 
@@ -549,6 +576,207 @@ export function BusinessDashboard({
                 <span className="day-number">Day {inventory?.inventoryState?.currentDay || 1}</span>
                 <p className="day-hint">Orders arrive based on supplier delivery times</p>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Market Tab */}
+        {activeTab === 'market' && (
+          <div className="market-tab">
+            <div className="dashboard-card market-overview-card">
+              <h3>📊 Market Overview</h3>
+              <div className="market-stats">
+                <div className="market-stat">
+                  <span className="stat-label">Day</span>
+                  <span className="stat-value">{marketState.currentDay || 1}</span>
+                </div>
+                <div className="market-stat">
+                  <span className="stat-label">Your Market Share</span>
+                  <span className="stat-value highlight">{marketState.playerMarketShare?.toFixed(1) || 15}%</span>
+                </div>
+                <div className="market-stat">
+                  <span className="stat-label">Your Ranking</span>
+                  <span className="stat-value">#{marketState.playerRanking || 4}</span>
+                </div>
+                <div className="market-stat">
+                  <span className="stat-label">Market Growth</span>
+                  <span className={`stat-value ${(marketState.marketGrowth || 0) >= 0 ? 'positive' : 'negative'}`}>
+                    {(marketState.marketGrowth || 0) >= 0 ? '+' : ''}{marketState.marketGrowth || 0}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Active Event */}
+            {marketState.activeEvent && (
+              <div className="dashboard-card event-card">
+                <h3>🎯 Active Event: {marketState.activeEvent.name}</h3>
+                <p className="event-desc">{marketState.activeEvent.description}</p>
+                <div className="event-timer">
+                  <span>Time remaining: {marketState.eventDaysRemaining} day(s)</span>
+                </div>
+              </div>
+            )}
+
+            {/* Category Demand */}
+            <div className="dashboard-card demand-card">
+              <h3>📈 Repair Category Demand</h3>
+              <div className="demand-grid">
+                {Object.keys(REPAIR_CATEGORIES).map(catId => {
+                  const cat = REPAIR_CATEGORIES[catId];
+                  const demand = marketState.categoryDemand?.[catId] || 1;
+                  const level = demand > 1.2 ? 'high' : demand < 0.8 ? 'low' : 'normal';
+                  return (
+                    <div key={catId} className={`demand-item ${level}`}>
+                      <span className="demand-icon">{cat.icon}</span>
+                      <span className="demand-name">{cat.name}</span>
+                      <span className="demand-level">{level.toUpperCase()}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Pricing Strategy */}
+            <div className="dashboard-card pricing-card">
+              <h3>💰 Pricing Strategy</h3>
+              <div className="pricing-options">
+                {Object.keys(REPAIR_CATEGORIES).map(catId => {
+                  const cat = REPAIR_CATEGORIES[catId];
+                  const currentTier = marketState.playerPricing?.[catId] || 'normal';
+                  return (
+                    <div key={catId} className="pricing-row">
+                      <span className="pricing-icon">{cat.icon}</span>
+                      <span className="pricing-name">{cat.name}</span>
+                      <select
+                        value={currentTier}
+                        onChange={(e) => market?.setPricing?.(catId, e.target.value)}
+                        className="pricing-select"
+                      >
+                        <option value="low">Budget (-30%)</option>
+                        <option value="normal">Standard</option>
+                        <option value="premium">Premium (+40%)</option>
+                      </select>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Specialization */}
+            <div className="dashboard-card specialization-card">
+              <h3>🎯 Specialization</h3>
+              <p className="spec-hint">Focus on specific repairs for bonus success rates</p>
+              <div className="specialization-grid">
+                {Object.keys(SPECIALIZATIONS).map(specId => {
+                  const spec = SPECIALIZATIONS[specId];
+                  const isActive = marketState.playerSpecialization === specId;
+                  return (
+                    <button
+                      key={specId}
+                      className={`spec-btn ${isActive ? 'active' : ''}`}
+                      onClick={() => market?.setSpecialization?.(specId)}
+                    >
+                      <span className="spec-icon">{spec.icon}</span>
+                      <span className="spec-name">{spec.name}</span>
+                      <span className="spec-desc">{spec.description}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Competitors Tab */}
+        {activeTab === 'competitors' && (
+          <div className="competitors-tab">
+            <div className="dashboard-card competitors-header">
+              <h3>🏢 Competitor Landscape</h3>
+              <p>Your rank: #{marketState.playerRanking || 4} with {marketState.playerMarketShare?.toFixed(1) || 15}% market share</p>
+            </div>
+            
+            <div className="competitors-grid">
+              {marketState.competitors?.map(comp => {
+                const isSelected = selectedCompetitor === comp.id;
+                return (
+                  <div
+                    key={comp.id}
+                    className={`competitor-card ${isSelected ? 'selected' : ''}`}
+                    onClick={() => setSelectedCompetitor(isSelected ? null : comp.id)}
+                  >
+                    <div className="comp-header">
+                      <span className="comp-icon">{comp.icon}</span>
+                      <span className="comp-name">{comp.name}</span>
+                    </div>
+                    <div className="comp-stats">
+                      <div className="comp-stat">
+                        <span>Lvl</span>
+                        <span>{comp.level}</span>
+                      </div>
+                      <div className="comp-stat">
+                        <span>Rep</span>
+                        <span>{comp.reputation}</span>
+                      </div>
+                      <div className="comp-stat">
+                        <span>Share</span>
+                        <span>{comp.marketShare}%</span>
+                      </div>
+                    </div>
+                    <div className="comp-strategy">{comp.strategy}</div>
+                    
+                    {isSelected && (
+                      <div className="comp-details">
+                        <div className="comp-detail-row">
+                          <span>Specialization:</span>
+                          <span>{comp.specialization || 'General'}</span>
+                        </div>
+                        <div className="comp-detail-row">
+                          <span>Employees:</span>
+                          <span>{comp.employeeCount}</span>
+                        </div>
+                        <div className="comp-detail-row">
+                          <span>Marketing:</span>
+                          <span>Level {comp.marketingLevel}</span>
+                        </div>
+                        <div className="comp-performance">
+                          <span>Recent Performance:</span>
+                          {comp.recentPerformance?.slice(0, 5).map((p, i) => (
+                            <span key={i} className="perf-item">
+                              Rep: {Math.round(p.rep)}, Share: {p.share?.toFixed(1)}%
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* News Tab */}
+        {activeTab === 'news' && (
+          <div className="news-tab">
+            <div className="dashboard-card news-header">
+              <h3>📰 Market News</h3>
+              <p>Day {marketState.currentDay || 1}</p>
+            </div>
+            
+            <div className="news-list">
+              {marketState.news?.length > 0 ? (
+                marketState.news.map(item => (
+                  <div key={item.id} className={`news-item ${item.type}`}>
+                    <span className="news-day">Day {item.day}</span>
+                    <span className="news-text">{item.text}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="news-empty">
+                  <p>No news yet. Complete repairs to see market updates!</p>
+                </div>
+              )}
             </div>
           </div>
         )}

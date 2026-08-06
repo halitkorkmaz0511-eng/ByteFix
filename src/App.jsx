@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useGameState } from './hooks/useGameState';
 import { useIdleManagement } from './hooks/useIdleManagement';
 import { useInventory } from './hooks/useInventory';
+import { useMarket } from './hooks/useMarket';
 import { generateCustomer } from './data/customerData';
 import { problems } from './data/problems';
 import { soundSystem } from './utils/soundSystem';
@@ -92,6 +93,27 @@ function App() {
     resetInventory
   } = useInventory(gameState, addMoney);
 
+  // Market system
+  const {
+    marketState,
+    runDailySimulation,
+    advanceDay: advanceMarketDay,
+    setPricing,
+    setSpecialization,
+    getCategoryDemand,
+    getCategoryPrice,
+    getSpecializationBonus,
+    getPricingEffect,
+    getCustomerAttraction,
+    getMarketSummary,
+    showNewsPopup,
+    newNews,
+    dismissNews,
+    REPAIR_CATEGORIES,
+    PRICING_TIERS,
+    SPECIALIZATIONS
+  } = useMarket(gameState);
+
   // Screen state
   const [currentScreen, setCurrentScreen] = useState('workshop');
   
@@ -116,6 +138,9 @@ function App() {
 
   // Reward state
   const [reward, setReward] = useState(null);
+  
+  // Market tracking - run simulation every 3 completed repairs
+  const [repairsToday, setRepairsToday] = useState(0);
 
   // Refs for timers
   const spawnTimerRef = useRef(null);
@@ -500,6 +525,17 @@ function App() {
     setReward(null);
     setFixedProblems([]);
     
+    // Track repair for market simulation
+    const newRepairsToday = repairsToday + 1;
+    setRepairsToday(newRepairsToday);
+    
+    // Run market simulation every 3 repairs (roughly one game day)
+    if (newRepairsToday >= 3) {
+      advanceMarketDay();
+      runDailySimulation();
+      setRepairsToday(0);
+    }
+    
     // Show exit animation
     if (completedCustomer) {
       setExitingCustomer(completedCustomer);
@@ -522,7 +558,7 @@ function App() {
         setCurrentScreen('workshop');
       }
     }
-  }, [activeCustomer, customerQueue.length, bringNextCustomer]);
+  }, [activeCustomer, customerQueue.length, bringNextCustomer, repairsToday, advanceMarketDay, runDailySimulation]);
 
   // Continue from failed screen
   const handleContinueFromFailed = useCallback(() => {
@@ -838,6 +874,19 @@ function App() {
             placeOrder,
             getActiveOrders,
             getOrderETA
+          }}
+          market={{
+            marketState,
+            getCategoryDemand,
+            getCategoryPrice,
+            getPricingEffect,
+            getSpecializationBonus,
+            setPricing,
+            setSpecialization,
+            getMarketSummary,
+            REPAIR_CATEGORIES,
+            PRICING_TIERS,
+            SPECIALIZATIONS
           }}
           onClose={() => setShowDashboard(false)}
           onHireAssistant={hireAssistant}
