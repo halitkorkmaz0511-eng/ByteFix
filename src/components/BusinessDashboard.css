@@ -90,6 +90,58 @@
   gap: 1.5rem;
 }
 
+/* Business Snapshot */
+.snapshot-card {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #3b82f6;
+}
+
+.snapshot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.snapshot-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #0f172a;
+  border-radius: 8px;
+  border: 1px solid #334155;
+}
+
+.snapshot-item.contract {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.snapshot-item.buff {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.snapshot-icon {
+  font-size: 1.5rem;
+}
+
+.snapshot-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.snapshot-value {
+  color: #f1f5f9;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.snapshot-label {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
 .dashboard-card {
   background: #1e293b;
   border-radius: 12px;

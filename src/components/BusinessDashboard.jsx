@@ -135,6 +135,59 @@ export function BusinessDashboard({
       <div className="dashboard-content">
         {activeTab === 'overview' && (
           <div className="overview-tab">
+            {/* Business Snapshot */}
+            <div className="dashboard-card snapshot-card">
+              <h3>📊 Business Snapshot</h3>
+              <div className="snapshot-grid">
+                <div className="snapshot-item">
+                  <span className="snapshot-icon">💵</span>
+                  <div className="snapshot-content">
+                    <span className="snapshot-value">${gameState.money.toLocaleString()}</span>
+                    <span className="snapshot-label">Balance</span>
+                  </div>
+                </div>
+                <div className="snapshot-item">
+                  <span className="snapshot-icon">📈</span>
+                  <div className="snapshot-content">
+                    <span className="snapshot-value">{successRate}%</span>
+                    <span className="snapshot-label">Success</span>
+                  </div>
+                </div>
+                <div className="snapshot-item">
+                  <span className="snapshot-icon">⭐</span>
+                  <div className="snapshot-content">
+                    <span className="snapshot-value">{gameState.reputation}</span>
+                    <span className="snapshot-label">Reputation</span>
+                  </div>
+                </div>
+                <div className="snapshot-item">
+                  <span className="snapshot-icon">🏢</span>
+                  <div className="snapshot-content">
+                    <span className="snapshot-value">${companyState?.totalValue?.toLocaleString() || 0}</span>
+                    <span className="snapshot-label">Value</span>
+                  </div>
+                </div>
+                {eventState?.activeContracts?.length > 0 && (
+                  <div className="snapshot-item contract">
+                    <span className="snapshot-icon">📑</span>
+                    <div className="snapshot-content">
+                      <span className="snapshot-value">{eventState.activeContracts.length}</span>
+                      <span className="snapshot-label">Contracts</span>
+                    </div>
+                  </div>
+                )}
+                {eventState?.activeBuffs?.length > 0 && (
+                  <div className="snapshot-item buff">
+                    <span className="snapshot-icon">✨</span>
+                    <div className="snapshot-content">
+                      <span className="snapshot-value">{eventState.activeBuffs.length}</span>
+                      <span className="snapshot-label">Effects</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Business Health */}
             <div className="dashboard-card health-card">
               <h3>🏥 Business Health</h3>
